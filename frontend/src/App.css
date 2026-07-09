@@ -75,6 +75,28 @@
   border-bottom-left-radius: 4px;
 }
 
+/* Tools + sources under an answer */
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.tag {
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+.tag.tool {
+  color: var(--gold);
+  border-color: rgba(201, 168, 106, 0.4);
+}
+
 /* Typing dots */
 .typing {
   display: flex;

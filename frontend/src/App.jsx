@@ -32,7 +32,15 @@ export default function App() {
         body: JSON.stringify({ question, session_id: "web" }),
       });
       const data = await res.json();
-      setMessages((prev) => [...prev, { role: "assistant", text: data.answer }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          text: data.answer,
+          tools: data.tools_used,   // which tools the agent chose
+          sources: data.sources,    // which documents it searched
+        },
+      ]);
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -58,6 +66,18 @@ export default function App() {
         {messages.map((m, i) => (
           <div key={i} className={`msg ${m.role}`}>
             {m.text}
+
+            {/* Show tools + sources under an assistant answer, if any. */}
+            {(m.tools?.length > 0 || m.sources?.length > 0) && (
+              <div className="meta">
+                {m.tools?.map((t, j) => (
+                  <span key={j} className="tag tool">tool · {t}</span>
+                ))}
+                {m.sources?.map((s, j) => (
+                  <span key={j} className="tag src">doc · {s}</span>
+                ))}
+              </div>
+            )}
           </div>
         ))}
 

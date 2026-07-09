@@ -38,7 +38,12 @@ def test_agent_answers_without_tools(monkeypatch):
         lambda **kw: _reply([_text("direct answer")], "end_turn"),
     )
     result = agent.run("hi")
-    assert result == {"answer": "direct answer", "tools_used": [], "session_id": None}
+    assert result == {
+        "answer": "direct answer",
+        "tools_used": [],
+        "sources": [],
+        "session_id": None,
+    }
 
 
 def test_agent_remembers_history_across_turns(monkeypatch):

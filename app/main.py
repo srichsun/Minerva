@@ -28,6 +28,7 @@ class AgentRequest(BaseModel):
 class AgentResponse(BaseModel):
     answer: str
     tools_used: list[str]
+    sources: list[str] = []
     session_id: str | None = None
 
 
