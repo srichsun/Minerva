@@ -1,6 +1,8 @@
 # Doc AI Assistant
 
-A small **RAG (Retrieval-Augmented Generation) document Q&A API**. You load a
+**English** · [中文](README.zh-TW.md)
+
+A **RAG (Retrieval-Augmented Generation) document Q&A API**. You load a
 set of documents (product docs, policies, FAQs), and users ask questions in
 natural language. The service retrieves the relevant passages and asks Claude to
 answer **using only those passages**, returning the answer together with its
@@ -44,7 +46,7 @@ source** — which is exactly what companies build in-house.
 | Packaging     | uv         | One tool for venv + lockfile, much faster than pip/poetry. |
 | Vector store  | Chroma     | Embedded, zero infra; no SaaS account (Pinecone) or extra DB (pgvector). |
 | LLM           | Claude     | Clean Anthropic SDK; model configurable, defaults to `claude-haiku-4-5` (cheap for dev). |
-| Embeddings    | Chroma local (all-MiniLM) | No API key / cost in week 1; can swap to a cloud model later. |
+| Embeddings    | Chroma local (all-MiniLM) | No API key or cost by default; swap to a cloud model when needed. |
 
 ## Project layout
 

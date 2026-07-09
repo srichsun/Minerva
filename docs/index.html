@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Doc AI Assistant</title>
+<meta name="description" content="A RAG document Q&A API that grows into a tool-using agent. Grounded answers with citations, built on FastAPI and Claude.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📄</text></svg>">
+<style>
+  :root{
+    --bg:#0b0e14; --panel:#11151f; --line:#1e2532; --text:#e6e9ef;
+    --muted:#8a93a6; --accent:#5eead4; --accent2:#818cf8; --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC",sans-serif;
+    line-height:1.65;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:920px;margin:0 auto;padding:0 24px}
+  /* nav */
+  nav{position:sticky;top:0;z-index:10;backdrop-filter:blur(10px);
+    background:rgba(11,14,20,.8);border-bottom:1px solid var(--line)}
+  .nav{display:flex;align-items:center;gap:20px;height:60px}
+  .brand{font-weight:700;letter-spacing:.02em}
+  .brand span{color:var(--accent)}
+  .nav .links{display:flex;gap:18px;margin-left:auto;font-size:14px;color:var(--muted)}
+  .nav .links a:hover{color:var(--text)}
+  .btn{border:1px solid var(--line);padding:7px 14px;border-radius:8px;font-size:13px;color:var(--text)}
+  .btn:hover{border-color:var(--accent)}
+  .btn.primary{background:var(--accent);color:#04211c;border-color:var(--accent);font-weight:600}
+  .langtoggle{cursor:pointer;font-size:13px;color:var(--muted);border:1px solid var(--line);
+    padding:6px 10px;border-radius:8px}
+  .langtoggle:hover{color:var(--text)}
+  @media(max-width:760px){.nav .links{display:none}}
+  /* hero */
+  header{padding:96px 0 64px;border-bottom:1px solid var(--line)}
+  .kicker{font-family:var(--mono);font-size:13px;color:var(--accent);letter-spacing:.08em;text-transform:uppercase}
+  h1{font-size:clamp(34px,6vw,56px);line-height:1.1;margin:16px 0 20px;letter-spacing:-.02em}
+  h1 em{font-style:normal;color:var(--accent)}
+  .lede{font-size:19px;color:var(--muted);max-width:640px}
+  .cta{display:flex;gap:12px;margin-top:32px;flex-wrap:wrap}
+  .metrics{display:flex;gap:14px;margin-top:44px;flex-wrap:wrap}
+  .metric{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:14px 18px;min-width:150px}
+  .metric b{display:block;font-size:22px;color:var(--accent)}
+  .metric span{font-size:13px;color:var(--muted)}
+  /* sections */
+  section{padding:64px 0;border-bottom:1px solid var(--line)}
+  .sec-h{font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+  h2{font-size:28px;margin:0 0 14px;letter-spacing:-.01em}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:28px}
+  @media(max-width:760px){.grid{grid-template-columns:1fr}}
+  .card{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:22px}
+  .card .n{font-family:var(--mono);color:var(--accent2);font-size:13px}
+  .card h3{margin:8px 0 8px;font-size:18px}
+  .card p{margin:0;color:var(--muted);font-size:15px}
+  code,pre{font-family:var(--mono)}
+  pre{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;
+    overflow-x:auto;font-size:13px;color:#cdd3df;line-height:1.6}
+  .flow{color:var(--muted);font-size:13.5px}
+  .stack{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+  .chip{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:7px 14px;font-size:14px}
+  .chip b{color:var(--accent)}
+  ul.clean{list-style:none;padding:0;margin:20px 0 0}
+  ul.clean li{padding:12px 0;border-top:1px solid var(--line);color:var(--muted)}
+  ul.clean li b{color:var(--text)}
+  footer{padding:40px 0 64px;color:var(--muted);font-size:14px}
+  .hide{display:none!important}
+</style>
+</head>
+<body>
+<nav><div class="wrap nav">
+  <div class="brand">Doc<span>·</span>AI</div>
+  <div class="links">
+    <a href="#overview" data-en="Overview" data-zh="總覽"></a>
+    <a href="#agent" data-en="Agent" data-zh="Agent"></a>
+    <a href="#rag" data-en="RAG vs Agent" data-zh="RAG vs Agent"></a>
+    <a href="#stack" data-en="Stack" data-zh="技術"></a>
+  </div>
+  <span class="langtoggle" id="langBtn">中文</span>
+  <a class="btn" id="ghBtn" href="https://github.com/srichsun/doc-ai-assistant" target="_blank" rel="noopener">GitHub</a>
+</div></nav>
+
+<header><div class="wrap">
+  <div class="kicker" data-en="RAG · Agent · Tool use" data-zh="RAG · Agent · 工具呼叫"></div>
+  <h1 data-en="Ask your documents.<br><em>Get grounded answers.</em>" data-zh="問你的文件，<br><em>得到有根據的答案。</em>"></h1>
+  <p class="lede" data-en="A document Q&amp;A API that retrieves the relevant passages and answers using only those passages — with citations. Then it grows into an agent that decides which tools to call on its own." data-zh="一個文件問答 API：檢索相關段落、只根據這些段落回答，並附上來源。接著它升級成一個能自己決定呼叫哪些工具的 agent。"></p>
+  <div class="cta">
+    <a class="btn primary" href="https://github.com/srichsun/doc-ai-assistant" target="_blank" rel="noopener" data-en="View source" data-zh="看原始碼"></a>
+    <a class="btn" href="#agent" data-en="How the agent works" data-zh="Agent 怎麼運作"></a>
+  </div>
+  <div class="metrics">
+    <div class="metric"><b>2</b><span data-en="tools, agent-selected" data-zh="工具，agent 自選"></span></div>
+    <div class="metric"><b>12</b><span data-en="tests, all green" data-zh="測試，全過"></span></div>
+    <div class="metric"><b>0</b><span data-en="ungrounded answers" data-zh="無根據的答案"></span></div>
+  </div>
+</div></header>
+
+<section id="overview"><div class="wrap">
+  <div class="sec-h" data-en="What it does" data-zh="它在做什麼"></div>
+  <h2 data-en="Grounded document Q&amp;A" data-zh="有根據的文件問答"></h2>
+  <p class="lede" style="font-size:16px" data-en="Load your documents (product docs, policies, FAQs). Users ask in plain language. The service retrieves the most relevant chunks, asks the model to answer using only those chunks, and returns the answer with its sources. If the answer isn't in the documents, it says so instead of guessing." data-zh="載入你的文件（產品說明、政策、FAQ）。使用者用自然語言提問。服務檢索最相關的片段，請模型只根據這些片段回答，並回傳答案與來源。文件裡沒有答案時，它會直接說不知道，而不是亂猜。"></p>
+  <div class="grid">
+    <div class="card"><div class="n">01</div>
+      <h3 data-en="Retrieval-augmented answers" data-zh="檢索增強的回答"></h3>
+      <p data-en="Only the relevant passages go into the prompt — cheaper than pasting whole documents, and answers cite where they came from." data-zh="只有相關段落進 prompt —— 比塞整份文件省，而且答案會標出來源。"></p></div>
+    <div class="card"><div class="n">02</div>
+      <h3 data-en="Says &quot;I don't know&quot;" data-zh="會說「不知道」"></h3>
+      <p data-en="The model is instructed to answer only from retrieved context, so it doesn't invent policies that aren't in the docs." data-zh="模型被要求只根據檢索到的內容回答，不會亂編文件裡沒有的政策。"></p></div>
+    <div class="card"><div class="n">03</div>
+      <h3 data-en="Retrieval you can tune" data-zh="可調的檢索"></h3>
+      <p data-en="Local embeddings by default (no key, offline), paragraph-aware chunking for cleaner matches, and a one-flag switch to a cloud embedding model." data-zh="預設本地 embedding（免 key、離線）、段落感知切塊讓比對更乾淨，一個設定就能切到雲端 embedding 模型。"></p></div>
+    <div class="card"><div class="n">04</div>
+      <h3 data-en="Conversation memory" data-zh="對話記憶"></h3>
+      <p data-en="Pass a session id and follow-ups keep their context — &quot;when will it arrive?&quot; still knows which order you meant." data-zh="帶上 session id，追問就能延續上下文 —— 「它幾號到？」還記得你指的是哪張訂單。"></p></div>
+  </div>
+</div></section>
+
+<section id="agent"><div class="wrap">
+  <div class="sec-h" data-en="The upgrade" data-zh="升級"></div>
+  <h2 data-en="From a fixed pipeline to a tool-using agent" data-zh="從固定流程到會用工具的 agent"></h2>
+  <p class="lede" style="font-size:16px" data-en="Retrieval is wrapped as a search_documents tool, alongside a lookup_order tool. The model decides which tools to call and how many times. A single question that spans both — order status and return policy — makes it call both on its own, then combine the results." data-zh="檢索被包成一個 search_documents 工具，旁邊還有一個 lookup_order 工具。模型自己決定要呼叫哪些工具、呼叫幾次。一個橫跨兩者的問題 —— 訂單狀態 + 退貨政策 —— 會讓它自己同時呼叫兩個，再把結果整合起來。"></p>
+<pre data-en="POST /agent
+{ &quot;question&quot;: &quot;Status of order 1001, and can I still return it?&quot; }
+
+→ tools_used: [ &quot;lookup_order&quot;, &quot;search_documents&quot; ]
+→ answer:     order 1001 ships Jul 2, arrives Jul 5; returns
+              accepted within 14 days of receipt …" data-zh="POST /agent
+{ &quot;question&quot;: &quot;訂單 1001 的狀態，還能退嗎？&quot; }
+
+→ tools_used: [ &quot;lookup_order&quot;, &quot;search_documents&quot; ]
+→ answer:     訂單 1001 七月二號出貨、五號到；收到後
+              14 天內可退 …"></pre>
+</div></section>
+
+<section id="rag"><div class="wrap">
+  <div class="sec-h" data-en="Two endpoints, one knowledge base" data-zh="兩個 endpoint，同一個知識庫"></div>
+  <h2 data-en="RAG vs Agent — who controls the flow" data-zh="RAG vs Agent —— 誰掌控流程"></h2>
+  <div class="grid">
+    <div class="card">
+      <h3><code>/chat</code> — RAG</h3>
+      <p data-en="A fixed pipeline: always retrieve, then answer. Simple and predictable — when every question is &quot;look something up in the docs&quot;." data-zh="固定流程：一定先檢索，再回答。簡單、可預測 —— 當每個問題都是「去文件裡查一件事」時。"></p></div>
+    <div class="card">
+      <h3><code>/agent</code> — Agent</h3>
+      <p data-en="Same retrieval, exposed as a tool. The model chooses when to search, when to look up an order, and when it has enough to answer." data-zh="同一份檢索，包成工具。模型自己決定何時搜尋、何時查訂單、何時資訊夠了可以回答。"></p></div>
+  </div>
+  <p class="flow" style="margin-top:20px" data-en="The agent is a natural layer on top of the RAG retrieval — the same retrieval code, wrapped as a tool." data-zh="Agent 是 RAG 檢索之上很自然的一層 —— 同一份檢索 code，包成工具而已。"></p>
+</div></section>
+
+<section id="decisions"><div class="wrap">
+  <div class="sec-h" data-en="Design decisions" data-zh="設計決策"></div>
+  <h2 data-en="Trade-offs, made on purpose" data-zh="刻意做的取捨"></h2>
+  <ul class="clean">
+    <li data-en="<b>Local embeddings by default</b> — free and offline; a cloud provider is one env var away when higher retrieval quality is worth the cost." data-zh="<b>預設本地 embedding</b> —— 免費、離線；需要更高檢索品質時，切到雲端 provider 只差一個環境變數。"></li>
+    <li data-en="<b>Paragraph-aware chunking</b> — packing whole paragraphs instead of cutting every N characters keeps chunks as clean semantic units, which measurably lowered retrieval distance." data-zh="<b>段落感知切塊</b> —— 打包整段而非每 N 字硬切，讓每個 chunk 是乾淨的語意單位，明顯降低了檢索距離。"></li>
+    <li data-en="<b>Grounded by construction</b> — the system prompt limits the model to retrieved context, and answers return their sources so they're auditable." data-zh="<b>設計上就有根據</b> —— system prompt 把模型限制在檢索到的內容，答案回傳來源、可稽核。"></li>
+    <li data-en="<b>In-memory sessions</b> — right for a small service; a larger deployment swaps in Redis or a database so history survives restarts." data-zh="<b>In-memory sessions</b> —— 對小服務剛好；更大的部署換成 Redis 或資料庫，讓歷史在重啟後保留。"></li>
+  </ul>
+</div></section>
+
+<section id="stack"><div class="wrap">
+  <div class="sec-h" data-en="Built with" data-zh="使用技術"></div>
+  <h2 data-en="Stack" data-zh="技術棧"></h2>
+  <div class="stack">
+    <div class="chip"><b>FastAPI</b></div>
+    <div class="chip">Python 3.12</div>
+    <div class="chip"><b>Chroma</b> <span style="color:var(--muted)">vector store</span></div>
+    <div class="chip"><b>Claude</b> <span style="color:var(--muted)">Anthropic API</span></div>
+    <div class="chip">uv</div>
+    <div class="chip">pytest</div>
+    <div class="chip">Pydantic</div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <span data-en="Doc AI Assistant · FastAPI + Claude · " data-zh="Doc AI Assistant · FastAPI + Claude · "></span>
+  <a href="https://github.com/srichsun/doc-ai-assistant" target="_blank" rel="noopener" style="color:var(--accent)">GitHub</a>
+</div></footer>
+
+<script>
+(function(){
+  var lang = "en";
+  var els = document.querySelectorAll("[data-en]");
+  function apply(){
+    document.documentElement.setAttribute("data-lang", lang);
+    document.documentElement.lang = (lang==="zh")?"zh-Hant":"en";
+    els.forEach(function(el){ el.innerHTML = el.getAttribute("data-"+lang); });
+    document.getElementById("langBtn").textContent = (lang==="en") ? "中文" : "English";
+  }
+  document.getElementById("langBtn").addEventListener("click", function(){
+    lang = (lang==="en") ? "zh" : "en"; apply();
+  });
+  apply();
+})();
+</script>
+</body>
+</html>
