@@ -1,9 +1,21 @@
-"""Document ingestion: read files, split into chunks, store in Chroma."""
+"""Document ingestion and retrieval for RAG."""
 from pathlib import Path
 
 from pypdf import PdfReader
 
 from app import config, store
+
+SYSTEM_PROMPT = (
+    "You are a customer-support assistant. Answer the user's question using "
+    "only the context provided. If the answer is not in the context, say you "
+    "don't know rather than guessing. Keep the answer concise."
+)
+
+
+def build_prompt(question: str, hits: list[dict]) -> str:
+    """Assemble the retrieved chunks and the question into a single prompt."""
+    context = "\n\n".join(f"[{h['source']}] {h['text']}" for h in hits)
+    return f"Context:\n{context}\n\nQuestion: {question}"
 
 
 def _read_segments(path: Path) -> list[tuple[str, int | None]]:

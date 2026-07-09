@@ -28,5 +28,7 @@ def search(q: str):
 
 @app.post("/chat", response_model=ChatResponse)
 def chat(req: ChatRequest):
-    answer = llm.generate(req.question)
+    hits = rag.retrieve(req.question)
+    prompt = rag.build_prompt(req.question, hits)
+    answer = llm.generate(prompt, system=rag.SYSTEM_PROMPT)
     return ChatResponse(answer=answer)
