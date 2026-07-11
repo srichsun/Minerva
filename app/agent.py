@@ -41,7 +41,8 @@ def run(question: str, session_id: str | None = None) -> dict:
         # Record the assistant turn either way, so history stays complete.
         messages.append({"role": "assistant", "content": response.content})
 
-        # Claude didn't ask for a tool, so it has enough to answer now — done.
+        # No tool requested this round — Claude is done, whether that's on
+        # the first reply or after several rounds of tool calls.
         if response.stop_reason != "tool_use":
             answer = "".join(b.text for b in response.content if b.type == "text")
             if session_id:
@@ -58,16 +59,21 @@ def run(question: str, session_id: str | None = None) -> dict:
         for block in response.content:
             if block.type == "tool_use":
                 tools_used.append(block.name)
-                # Track which documents a search touched, for the UI.
                 if block.name == "search_documents":
-                    for hit in rag.retrieve(block.input.get("query", "")):
+                    # Retrieve once, reuse for both the source list (UI) and
+                    # the tool result text (Claude) — avoids querying twice.
+                    hits = rag.retrieve(block.input.get("query", ""))
+                    for hit in hits:
                         if hit["source"] not in sources:
                             sources.append(hit["source"])
+                    content = tools.format_hits(hits)
+                else:
+                    content = tools.dispatch(block.name, block.input)
                 results.append(
                     {
                         "type": "tool_result",
                         "tool_use_id": block.id,
-                        "content": tools.dispatch(block.name, block.input),
+                        "content": content,
                     }
                 )
         messages.append({"role": "user", "content": results})

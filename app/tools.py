@@ -42,11 +42,20 @@ TOOLS = [
 ]
 
 
-def search_documents(query: str) -> str:
-    hits = rag.retrieve(query)
+def format_hits(hits: list[dict]) -> str:
+    """Format already-retrieved chunks into what Claude sees as a tool result.
+
+    Split out from search_documents so callers that already retrieved hits
+    (e.g. to also collect source filenames) can reuse this without a second
+    rag.retrieve() call for the same query.
+    """
     if not hits:
         return "No relevant documents found."
     return "\n\n".join(f"[{h['source']}] {h['text']}" for h in hits)
+
+
+def search_documents(query: str) -> str:
+    return format_hits(rag.retrieve(query))
 
 
 def lookup_order(order_id: str) -> str:
