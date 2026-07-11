@@ -4,6 +4,16 @@ import "./App.css";
 // Where the FastAPI backend runs.
 const API = "http://127.0.0.1:8000";
 
+// One random id per browser, saved so it survives page reloads.
+function getSessionId() {
+  let id = localStorage.getItem("session_id");
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem("session_id", id);
+  }
+  return id;
+}
+
 export default function App() {
   // --- state: the three things that change over time ---
   const [messages, setMessages] = useState([]); // [{ role, text }]
@@ -29,7 +39,7 @@ export default function App() {
       const res = await fetch(`${API}/agent`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, session_id: "web" }),
+        body: JSON.stringify({ question, session_id: getSessionId() }),
       });
       const data = await res.json();
       setMessages((prev) => [
