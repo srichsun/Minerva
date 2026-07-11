@@ -8,6 +8,7 @@ from app import config, rag
 
 
 def main():
+    """Ingest data_dir (default "data") and print how many chunks per file."""
     data_dir = sys.argv[1] if len(sys.argv) > 1 else "data"
     print(f"Embedding provider: {config.EMBEDDING_PROVIDER} "
           f"(collection: {config.COLLECTION_NAME})")

@@ -30,6 +30,7 @@ def _embedding_function():
 
 
 def get_collection():
+    """Return (or create) the Chroma collection for the configured provider."""
     return _client.get_or_create_collection(
         config.COLLECTION_NAME,
         embedding_function=_embedding_function(),

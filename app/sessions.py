@@ -12,4 +12,5 @@ def get(session_id: str) -> list:
 
 
 def save(session_id: str, messages: list) -> None:
+    """Overwrite the stored history for a session with the given messages."""
     _STORE[session_id] = messages

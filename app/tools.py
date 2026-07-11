@@ -55,10 +55,12 @@ def format_hits(hits: list[dict]) -> str:
 
 
 def search_documents(query: str) -> str:
+    """Search the knowledge base and return matching passages as one string."""
     return format_hits(rag.retrieve(query))
 
 
 def lookup_order(order_id: str) -> str:
+    """Return a status line for the given order id, or a not-found message."""
     return _FAKE_ORDERS.get(order_id, f"No order found with ID {order_id}.")
 
 

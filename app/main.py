@@ -55,6 +55,7 @@ def _dedupe_sources(hits: list[dict]) -> list[Source]:
 
 @app.get("/health")
 def health():
+    """Liveness check — no dependencies, no API key needed."""
     return {"status": "ok"}
 
 
@@ -75,6 +76,7 @@ def agent_endpoint(req: AgentRequest):
 
 @app.post("/chat", response_model=ChatResponse)
 def chat(req: ChatRequest):
+    """Fixed RAG: always retrieve, then answer — no tool-use decision."""
     hits = rag.retrieve(req.question)
     if not hits:
         return ChatResponse(
