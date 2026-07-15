@@ -40,7 +40,7 @@ TTS_VOICE = os.getenv("TTS_VOICE", "coral")
 # ElevenLabs (used when TTS_PROVIDER=elevenlabs). The user's chosen library
 # voice; override ELEVENLABS_VOICE_ID to pick another.
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
-ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "7dEuJHhweR5AFXA4INkB")
+ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "NtS6nEHDYMQC9QczMQuq")
 ELEVENLABS_MODEL = os.getenv("ELEVENLABS_MODEL", "eleven_multilingual_v2")
 
 # Firebase Admin service-account file, used to verify sign-in tokens.
