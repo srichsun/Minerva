@@ -12,6 +12,7 @@ import uuid
 
 from langchain.agents import create_agent
 from langchain.agents.middleware import dynamic_prompt
+from langchain_core.messages import AIMessageChunk
 from langgraph.checkpoint.memory import InMemorySaver
 from pydantic import BaseModel, Field
 
@@ -193,7 +194,15 @@ def chat_and_log(
     # injection for the duration of this call.
     auth.current_uid.set(user_id)
     result = run(message, session_id)
-    reply = result["answer"]
+    _log_exchange(message, result["answer"], user_id, session_id)
+    return result
+
+
+def _log_exchange(
+    message: str, reply: str, user_id: str | None, session_id: str | None
+) -> None:
+    """Save one exchange as a journal entry, then embed it and (occasionally)
+    refresh the profile. Failures in the extras never lose the saved entry."""
     try:
         tags = extract_tags(message, reply)
     except Exception:
@@ -207,15 +216,33 @@ def chat_and_log(
         wins=tags.wins,
         themes=tags.themes,
     )
-    # Embed the entry so future conversations can recall it. A failure here
-    # (no key, vector store down) must not lose the entry we just saved.
     try:
         recall.index_entry(entry_id, message, user_id=user_id)
     except Exception:
         pass
-    # Periodically re-condense the long-term profile from recent entries.
     try:
         profile.maybe_refresh(user_id)
     except Exception:
         pass
-    return result
+
+
+def stream_and_log(
+    message: str, user_id: str | None = None, session_id: str | None = None
+):
+    """Stream the coach's reply token by token (for a typewriter effect), then
+    save the exchange once it's complete. Yields plain text chunks."""
+    auth.current_uid.set(user_id)
+    thread_id = session_id or f"anon-{uuid.uuid4()}"
+    cfg = {"configurable": {"thread_id": thread_id}}
+    parts = []
+    for chunk, _meta in _agent.stream(
+        {"messages": [{"role": "user", "content": message}]},
+        cfg,
+        stream_mode="messages",
+    ):
+        # Only the coach's own text tokens (not tool-call plumbing).
+        if isinstance(chunk, AIMessageChunk) and isinstance(chunk.content, str):
+            if chunk.content:
+                parts.append(chunk.content)
+                yield chunk.content
+    _log_exchange(message, "".join(parts), user_id, session_id)

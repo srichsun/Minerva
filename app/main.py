@@ -4,7 +4,7 @@ from datetime import date, datetime, timezone
 
 from fastapi import Depends, FastAPI, File, Form, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
+from fastapi.responses import Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -77,6 +77,16 @@ def agent_endpoint(req: TalkRequest, uid: str = Depends(auth.current_user)):
     Requires sign-in; pass a session_id to keep memory across follow-ups.
     """
     return agent.chat_and_log(req.question, user_id=uid, session_id=req.session_id)
+
+
+@app.post("/agent/stream")
+def agent_stream(req: TalkRequest, uid: str = Depends(auth.current_user)):
+    """Same as /agent, but streams the reply token by token (typewriter effect).
+    The exchange is saved once streaming completes."""
+    return StreamingResponse(
+        agent.stream_and_log(req.question, user_id=uid, session_id=req.session_id),
+        media_type="text/plain",
+    )
 
 
 @app.post("/talk", response_model=TalkResponse)

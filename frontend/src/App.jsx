@@ -143,15 +143,33 @@ export default function App() {
 
     setMessages((prev) => [...prev, { role: "user", text }]);
     setInput("");
-    setLoading(true);
+    setLoading(true); // shows the typing dots until the first token arrives
     try {
-      const res = await authFetch(`${API}/agent`, {
+      const res = await authFetch(`${API}/agent/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: text, session_id: getSessionId() }),
       });
-      const data = await res.json();
-      setMessages((prev) => [...prev, { role: "assistant", text: data.answer }]);
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let started = false;
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        if (!started) {
+          started = true;
+          setLoading(false); // first token in — drop the dots, start the bubble
+          setMessages((prev) => [...prev, { role: "assistant", text: chunk }]);
+        } else {
+          setMessages((prev) => {
+            const copy = [...prev];
+            const last = copy[copy.length - 1];
+            copy[copy.length - 1] = { ...last, text: last.text + chunk };
+            return copy;
+          });
+        }
+      }
     } catch {
       setMessages((prev) => [
         ...prev,
