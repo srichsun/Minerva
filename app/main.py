@@ -6,9 +6,22 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel
 
-from app import agent, auth, entries, profile, voice
+from app import agent, auth, db, entries, profile, voice
 
 app = FastAPI(title="Daily Coach")
+
+
+@app.on_event("startup")
+def _ensure_tables() -> None:
+    """Create the journal tables on boot so a fresh deploy (e.g. Cloud Run
+    pointed at an empty Cloud SQL) works with no manual migration step.
+    Best-effort: a transient DB hiccup shouldn't stop the app from serving
+    /health. (pgvector's own tables + extension are created lazily on first use.)
+    """
+    try:
+        db.init_db()
+    except Exception:
+        pass
 
 # Allow the local React dev server (Vite) to call this API from the browser.
 app.add_middleware(
