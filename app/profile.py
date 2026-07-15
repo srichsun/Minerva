@@ -10,9 +10,7 @@ re-reading the whole history.
 
 Fixed size on purpose: injected every turn, so it must not grow without bound.
 """
-from langchain_anthropic import ChatAnthropic
-
-from app import config, db, entries
+from app import chat_model, db, entries
 from app.models import Profile
 
 # Re-condense the profile once this many new entries have accumulated. Cheap,
@@ -31,14 +29,9 @@ _CONDENSE_PROMPT = (
 )
 
 
-def _condense_model() -> ChatAnthropic:
-    """The model that rewrites the profile (real Claude; needs a key)."""
-    return ChatAnthropic(
-        model_name=config.CHAT_MODEL,
-        api_key=config.ANTHROPIC_API_KEY,
-        max_tokens=config.MAX_TOKENS,
-        timeout=30.0,
-    )
+def _condense_model():
+    """The model that rewrites the profile (ChatGPT or Claude per config)."""
+    return chat_model.build_chat_model()
 
 
 def get_profile(user_id: str | None) -> str:

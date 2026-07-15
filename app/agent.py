@@ -12,11 +12,10 @@ import uuid
 
 from langchain.agents import create_agent
 from langchain.agents.middleware import dynamic_prompt
-from langchain_anthropic import ChatAnthropic
 from langgraph.checkpoint.memory import InMemorySaver
 from pydantic import BaseModel, Field
 
-from app import auth, config, entries, profile, recall
+from app import auth, chat_model, entries, profile, recall
 
 SYSTEM_PROMPT = (
     "You are a warm, encouraging personal life coach and journaling companion. "
@@ -31,14 +30,9 @@ SYSTEM_PROMPT = (
 )
 
 
-def _default_model() -> ChatAnthropic:
-    """The real Claude model used in production (needs an API key)."""
-    return ChatAnthropic(
-        model_name=config.CHAT_MODEL,
-        api_key=config.ANTHROPIC_API_KEY,
-        max_tokens=config.MAX_TOKENS,
-        timeout=30.0,  # fail fast instead of hanging the worker
-    )
+def _default_model():
+    """The real chat model used in production — ChatGPT or Claude per config."""
+    return chat_model.build_chat_model()
 
 
 @dynamic_prompt

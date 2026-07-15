@@ -5,9 +5,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# LLM
+# LLM. The coach's "brain" is swappable via LangChain wrappers — set
+# LLM_PROVIDER to "openai" (ChatGPT) or "anthropic" (Claude).
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-CHAT_MODEL = os.getenv("CHAT_MODEL", "claude-haiku-4-5")
+CHAT_MODEL = os.getenv("CHAT_MODEL", "claude-haiku-4-5")          # used if anthropic
+OPENAI_CHAT_MODEL = os.getenv("OPENAI_CHAT_MODEL", "gpt-4o")      # used if openai
 MAX_TOKENS = 1024
 
 # Database (journal entries). Defaults to the local Postgres from
@@ -29,10 +32,10 @@ OPENAI_EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-s
 TTS_PROVIDER = os.getenv("TTS_PROVIDER", "elevenlabs")
 # OpenAI TTS voice (used when TTS_PROVIDER=openai). "fable" is British-ish.
 TTS_VOICE = os.getenv("TTS_VOICE", "fable")
-# ElevenLabs (used when TTS_PROVIDER=elevenlabs). Default voice is "George",
-# a warm British male; override ELEVENLABS_VOICE_ID to pick another.
+# ElevenLabs (used when TTS_PROVIDER=elevenlabs). Default voice is "Alice",
+# a clear British female; override ELEVENLABS_VOICE_ID to pick another.
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
-ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "JBFqnCBsd6RMkjVDRZzb")
+ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "Xb7hH8MSUJpSbSDYk0k2")
 ELEVENLABS_MODEL = os.getenv("ELEVENLABS_MODEL", "eleven_multilingual_v2")
 
 # Firebase Admin service-account file, used to verify sign-in tokens.
