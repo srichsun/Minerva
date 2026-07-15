@@ -1,0 +1,15 @@
+# Keep the image small and secrets out of it.
+.git
+.github
+.venv
+__pycache__
+**/__pycache__
+*.pyc
+.env
+secrets/
+frontend/
+chroma_db/
+data/
+.pytest_cache
+tests/
+README.md
