@@ -55,23 +55,11 @@ export default function App() {
   // Kept between renders: the recorder and the audio chunks it produces.
   const recorderRef = useRef(null);
   const chunksRef = useRef([]);
-  // One reusable <audio>. Browsers block auto-play unless a media element was
-  // first started by a user gesture; the reply plays long after the click, so
-  // we "prime" this element on every click/tap, then reuse it to play the mp3.
+  // One reusable <audio>; playback only ever starts from a tap on the speaker
+  // button, so the browser never blocks it — and nothing plays out loud unless
+  // the person asks for it.
   const audioRef = useRef(null);
-  const SILENT =
-    "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
-
-  function primeAudio() {
-    if (!audioRef.current) audioRef.current = new Audio();
-    const a = audioRef.current;
-    try {
-      a.src = SILENT;
-      a.play().then(() => a.pause()).catch(() => {});
-    } catch {
-      /* ignore */
-    }
-  }
+  const [speakingIdx, setSpeakingIdx] = useState(null); // which msg is playing
 
   // Auto-scroll to the newest message whenever the list changes.
   const bottom = useRef(null);
@@ -79,20 +67,32 @@ export default function App() {
     bottom.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  // Ask the backend to read a reply aloud, then play it on the primed element.
-  async function playReply(text) {
+  // Read one reply aloud — called from a tap on its speaker button. Tapping the
+  // same button again while it's playing stops it.
+  async function playReply(text, idx) {
+    const a = audioRef.current || (audioRef.current = new Audio());
+    if (speakingIdx === idx) {
+      a.pause();
+      setSpeakingIdx(null);
+      return;
+    }
     try {
+      setSpeakingIdx(idx);
       const res = await fetch(`${API}/speak`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       });
-      if (!res.ok) return;
-      const a = audioRef.current || (audioRef.current = new Audio());
+      if (!res.ok) {
+        setSpeakingIdx(null);
+        return;
+      }
+      a.pause();
       a.src = URL.createObjectURL(await res.blob());
-      await a.play().catch(() => {});
+      a.onended = () => setSpeakingIdx(null);
+      await a.play();
     } catch {
-      // If speech fails, we still showed the text — no big deal.
+      setSpeakingIdx(null); // speech failed; the text is still there
     }
   }
 
@@ -101,7 +101,6 @@ export default function App() {
     const text = input.trim();
     if (!text || loading) return;
 
-    primeAudio(); // unlock audio while we still have the click gesture
     setMessages((prev) => [...prev, { role: "user", text }]);
     setInput("");
     setLoading(true);
@@ -113,7 +112,6 @@ export default function App() {
       });
       const data = await res.json();
       setMessages((prev) => [...prev, { role: "assistant", text: data.answer }]);
-      playReply(data.answer);
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -130,7 +128,6 @@ export default function App() {
       recorderRef.current?.stop();
       return;
     }
-    primeAudio(); // unlock audio on the tap so the reply can auto-play later
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     const rec = new MediaRecorder(stream);
     chunksRef.current = [];
@@ -159,7 +156,6 @@ export default function App() {
         { role: "user", text: data.transcript || "🎤 (voice)" },
         { role: "assistant", text: data.answer },
       ]);
-      playReply(data.answer);
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -209,6 +205,16 @@ export default function App() {
         {messages.map((m, i) => (
           <div key={i} className={`msg ${m.role}`}>
             {m.text}
+            {m.role === "assistant" && m.text && (
+              <button
+                type="button"
+                className="speak"
+                onClick={() => playReply(m.text, i)}
+                title={speakingIdx === i ? "Stop" : "Play aloud"}
+              >
+                {speakingIdx === i ? "⏸ Playing…" : "🔊 Play"}
+              </button>
+            )}
           </div>
         ))}
 

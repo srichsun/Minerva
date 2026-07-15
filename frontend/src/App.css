@@ -214,3 +214,17 @@
   cursor: pointer;
 }
 .signout:hover { color: var(--gold); border-color: var(--gold); }
+
+/* Per-message "play aloud" button — nothing speaks unless you tap it. */
+.msg .speak {
+  display: inline-block;
+  margin-top: 10px;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.msg .speak:hover { color: var(--gold); border-color: var(--gold); }
