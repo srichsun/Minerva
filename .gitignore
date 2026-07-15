@@ -6,3 +6,5 @@ chroma_db/
 data/
 .DS_Store
 .pytest_cache/
+secrets/
+*firebase-adminsdk*.json
