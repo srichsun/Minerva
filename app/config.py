@@ -54,7 +54,7 @@ FIREBASE_CREDENTIALS = os.getenv(
 LANGSMITH_API_KEY = os.getenv("LANGSMITH_API_KEY", "")
 if LANGSMITH_API_KEY:
     os.environ.setdefault("LANGSMITH_TRACING", "true")
-    os.environ.setdefault("LANGSMITH_PROJECT", os.getenv("LANGSMITH_PROJECT", "daily-coach"))
+    os.environ.setdefault("LANGSMITH_PROJECT", os.getenv("LANGSMITH_PROJECT", "performance-coach"))
 
 # One collection per provider — their vectors have different dimensions and
 # must not share a collection.

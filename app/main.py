@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 from app import agent, auth, db, entries, profile, voice
 
-app = FastAPI(title="Daily Coach")
+app = FastAPI(title="Performance Coach")
 
 
 @app.on_event("startup")

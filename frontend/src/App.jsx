@@ -235,7 +235,7 @@ export default function App() {
     return (
       <div className="app gate">
         <header className="head">
-          <h1>Daily Coach</h1>
+          <h1>Performance Coach</h1>
           <p>Your personal coach that remembers, and gets to know you.</p>
         </header>
         <button className="google" onClick={() => signInWithGoogle()}>
@@ -248,7 +248,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="head">
-        <h1>Daily Coach</h1>
+        <h1>Performance Coach</h1>
         <p>Talk about your day — I'll remember, and help you see your wins.</p>
         <div className="who">
           <span>{user.displayName || user.email}</span>

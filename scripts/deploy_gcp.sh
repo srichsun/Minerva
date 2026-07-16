@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploy the Daily Coach API to Google Cloud: Cloud Run + Cloud SQL (Postgres
+# Deploy the Performance Coach API to Google Cloud: Cloud Run + Cloud SQL (Postgres
 # with pgvector) + Secret Manager. Run after `gcloud auth login`.
 #
 # Reads API keys from the local .env (gitignored) and the Firebase service
@@ -12,7 +12,7 @@ REGION="asia-east1"            # Changhua, Taiwan — closest to the user
 INSTANCE="coach-db"
 DB_NAME="coach"
 DB_USER="coach"
-SERVICE="daily-coach"
+SERVICE="performance-coach"
 CONN="${PROJECT}:${REGION}:${INSTANCE}"
 
 cd "$(dirname "$0")/.."

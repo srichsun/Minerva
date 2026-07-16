@@ -1,4 +1,4 @@
-# Daily Coach
+# Performance Coach
 
 **English** · [中文](README.zh-TW.md)
 
@@ -17,7 +17,7 @@ and context never blow up no matter how long you use it.
 
 A general chatbot forgets you the moment the tab closes. Feeding it your whole
 history every turn is expensive and eventually overflows the context window.
-Daily Coach splits memory into three layers, each answering a different question:
+Performance Coach splits memory into three layers, each answering a different question:
 
 | Layer | Backed by | Answers | AI? |
 |-------|-----------|---------|-----|
