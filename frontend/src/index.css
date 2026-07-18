@@ -1,15 +1,17 @@
-/* Global reset + luxury dark palette (deep black + champagne gold). */
+/* Global reset + a calm, warm "paper" palette for a wise, elegant coach. */
 :root {
-  --bg: #0a0908;         /* warm near-black */
-  --surface: #131210;    /* panels */
-  --surface-2: #1b1815;  /* raised panels */
-  --line: #2a2621;       /* hairline borders */
-  --text: #ece7dd;       /* warm ivory */
-  --muted: #948c7e;      /* secondary text */
-  --gold: #c9a86a;       /* champagne gold accent */
-  --gold-soft: rgba(201, 168, 106, 0.12);
+  --bg: #f4efe7;          /* warm paper */
+  --surface: #fffdf9;     /* cards / raised surfaces */
+  --surface-2: #ece5d8;   /* subtle fills */
+  --line: #e4dccd;        /* hairline borders */
+  --text: #2c2822;        /* warm ink */
+  --muted: #8b8174;       /* secondary text */
+  --accent: #9a7b4f;      /* muted antique gold */
+  --accent-deep: #7d6238;
+  --accent-soft: rgba(154, 123, 79, 0.1);
+  --shadow: 0 1px 2px rgba(44, 40, 34, 0.04), 0 8px 24px rgba(44, 40, 34, 0.06);
 
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 * {
@@ -27,8 +29,16 @@ body,
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC",
-    sans-serif;
-  line-height: 1.6;
+  font-family: "Newsreader", Georgia, "Noto Serif TC", serif;
+  line-height: 1.65;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
+
+/* Clean, quiet scrollbars. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+*::-webkit-scrollbar { width: 8px; }
+*::-webkit-scrollbar-thumb { background: var(--line); border-radius: 8px; }

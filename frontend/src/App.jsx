@@ -252,17 +252,59 @@ export default function App() {
   // Before the first auth check, show nothing to avoid a sign-in flash.
   if (!authReady) return null;
 
-  // Signed out: a simple gate. The coach is per-person, so sign in first.
+  // Signed out: a landing page that introduces the product, then sign-in.
   if (!user) {
     return (
-      <div className="app gate">
-        <header className="head">
+      <div className="landing">
+        <header className="lhero">
+          <div className="lmark">◈</div>
           <h1>Performance Coach</h1>
-          <p>Your personal coach that remembers, and gets to know you.</p>
+          <p>
+            A voice AI coach that listens to your day, remembers who you are,
+            and helps you see how far you've come.
+          </p>
+          <button className="google" onClick={() => signInWithGoogle()}>
+            Sign in with Google
+          </button>
+          <span className="lnote">Free to try · Your journal stays private</span>
         </header>
-        <button className="google" onClick={() => signInWithGoogle()}>
-          Sign in with Google
-        </button>
+
+        <section className="lfeatures">
+          <div className="lfeature">
+            <span className="licon">❝</span>
+            <h3>Talk, don't type</h3>
+            <p>
+              Just speak your day. It transcribes what you said and replies in a
+              warm, thoughtful voice — like a friend who's really listening.
+            </p>
+          </div>
+          <div className="lfeature">
+            <span className="licon">✦</span>
+            <h3>It remembers you</h3>
+            <p>
+              A living memory of your goals, patterns, and struggles — so every
+              conversation gets more personal, and more useful, over time.
+            </p>
+          </div>
+          <div className="lfeature">
+            <span className="licon">☖</span>
+            <h3>See your wins</h3>
+            <p>
+              Each day's meaningful wins, captured and reflected back — so your
+              growth never slips by unnoticed.
+            </p>
+          </div>
+        </section>
+
+        <footer className="lfoot">
+          <p>
+            Unlike a chatbot that forgets you, it carries your whole story —
+            while every reply stays sharp, warm, and personal.
+          </p>
+          <button className="google" onClick={() => signInWithGoogle()}>
+            Get started
+          </button>
+        </footer>
       </div>
     );
   }

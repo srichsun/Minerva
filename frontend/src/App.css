@@ -1,302 +1,437 @@
-/* A wide app: compact top bar, scrolling messages, input bar. */
+/* ------------------------------------------------------------------ *
+ * Performance Coach — a calm, elegant, editorial interface.
+ * ------------------------------------------------------------------ */
+
 .app {
-  max-width: 1200px;
+  max-width: 1040px;
   height: 100%;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  padding: 0 28px;
+  padding: 0 32px;
 }
 
-/* Header — a compact horizontal bar so the chat gets the vertical space. */
+/* --- Header: a quiet top bar so the conversation gets the room --- */
 .head {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   flex-wrap: wrap;
-  gap: 10px 18px;
-  padding: 16px 4px 14px;
+  gap: 8px 22px;
+  padding: 22px 2px 16px;
   border-bottom: 1px solid var(--line);
 }
 .head h1 {
-  font-family: "Fraunces", Georgia, "Times New Roman", serif;
+  font-family: "Fraunces", Georgia, serif;
   font-weight: 500;
-  font-size: 24px;
+  font-size: 25px;
   letter-spacing: 0.01em;
-  margin: 0 auto 0 0;          /* title left, push the rest to the right */
-}
-.head p { display: none; }     /* drop the subtitle to reclaim vertical space */
-
-/* The signed-out gate keeps the taller, centered look. */
-.app.gate .head { display: block; padding: 40px 4px 24px; }
-.app.gate .head h1 { font-size: 30px; margin: 0; }
-.app.gate .head p { display: block; margin-top: 14px; color: var(--muted); font-size: 15px; }
-
-/* Messages */
-.chat {
-  flex: 1;
-  overflow-y: auto;
-  padding: 28px 4px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-.empty {
-  margin: auto;
-  color: var(--muted);
-  font-style: italic;
-}
-
-.msg {
-  max-width: 82%;
-  padding: 14px 19px;
-  border-radius: 14px;
-  font-size: 16px;
-  white-space: pre-wrap;      /* keep line breaks from the answer */
-  animation: rise 0.35s ease both;
-}
-/* The coach's reflections read like an elegant, literary letter. */
-.msg.assistant .md,
-.winblock {
-  font-family: "Newsreader", Georgia, "Times New Roman", serif;
-  font-size: 17px;
-  line-height: 1.7;
-  letter-spacing: 0.006em;
-}
-.gate .head h1 { font-family: "Fraunces", Georgia, serif; }
-@keyframes rise {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.msg.user {
-  align-self: flex-end;
-  background: var(--gold-soft);
-  border: 1px solid rgba(201, 168, 106, 0.35);
-  border-bottom-right-radius: 4px;
-}
-.msg.assistant {
-  align-self: flex-start;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-left: 2px solid var(--gold);
-  border-bottom-left-radius: 4px;
-}
-
-/* Tools + sources under an answer */
-.meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid var(--line);
-}
-.tag {
-  font-size: 11.5px;
-  letter-spacing: 0.02em;
-  padding: 3px 9px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  color: var(--muted);
-}
-.tag.tool {
-  color: var(--gold);
-  border-color: rgba(201, 168, 106, 0.4);
-}
-
-/* Typing dots */
-.typing {
-  display: flex;
-  gap: 6px;
-}
-.typing span {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--gold);
-  opacity: 0.5;
-  animation: blink 1.2s infinite ease-in-out;
-}
-.typing span:nth-child(2) { animation-delay: 0.2s; }
-.typing span:nth-child(3) { animation-delay: 0.4s; }
-@keyframes blink {
-  0%, 80%, 100% { opacity: 0.25; transform: scale(0.9); }
-  40%           { opacity: 1;    transform: scale(1); }
-}
-
-/* Input bar */
-.bar {
-  display: flex;
-  gap: 12px;
-  padding: 18px 0 28px;
-  border-top: 1px solid var(--line);
-}
-.bar input {
-  flex: 1;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 14px 16px;
   color: var(--text);
-  font-size: 15px;
-  transition: border-color 0.2s;
+  margin: 0 auto 0 0;
 }
-.bar input::placeholder { color: var(--muted); }
-.bar input:focus {
-  outline: none;
-  border-color: var(--gold);
-}
-.bar button {
-  background: var(--gold);
-  color: #1a1200;
-  border: none;
-  border-radius: 12px;
-  padding: 0 24px;
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  cursor: pointer;
-  transition: opacity 0.2s, transform 0.1s;
-}
-.bar button:hover:not(:disabled) { opacity: 0.9; }
-.bar button:active:not(:disabled) { transform: translateY(1px); }
-.bar button:disabled { opacity: 0.4; cursor: default; }
-
-/* Mic button — outline by default, red + pulsing while recording. */
-.bar .mic {
-  background: var(--surface);
-  color: var(--gold);
-  border: 1px solid var(--line);
-  padding: 0 16px;
-  font-size: 17px;
-  font-weight: 400;
-}
-.bar .mic:hover { border-color: var(--gold); opacity: 1; }
-.bar .mic.on {
-  background: #7f1d1d;
-  color: #fff;
-  border-color: #7f1d1d;
-  animation: micpulse 1s infinite;
-}
-@keyframes micpulse {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.6; }
-}
-
-/* --- Auth: sign-in gate + header user row --- */
-.app.gate {
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  gap: 28px;
-}
-.google {
-  background: var(--gold);
-  color: #1a1200;
-  border: none;
-  border-radius: 8px;
-  padding: 12px 22px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.google:hover { opacity: 0.92; }
-
+.head p { display: none; }
 .head .who {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   margin: 0;
   font-size: 13px;
   color: var(--muted);
+  font-family: -apple-system, "Segoe UI", sans-serif;
 }
 .signout {
   background: transparent;
   color: var(--muted);
   border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 4px 12px;
-  font-size: 12px;
-  cursor: pointer;
-}
-.signout:hover { color: var(--gold); border-color: var(--gold); }
-
-/* Per-message "play aloud" button — nothing speaks unless you tap it. */
-.msg .speak {
-  display: inline-block;
-  margin-top: 10px;
-  background: transparent;
-  color: var(--muted);
-  border: 1px solid var(--line);
   border-radius: 999px;
-  padding: 3px 12px;
+  padding: 5px 13px;
   font-size: 12px;
   cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
 }
-.msg .speak:hover { color: var(--gold); border-color: var(--gold); }
+.signout:hover { color: var(--accent-deep); border-color: var(--accent); }
 
-/* Markdown rendering inside assistant bubbles — lists, bold, headers. */
-.msg .md > *:first-child { margin-top: 0; }
-.msg .md > *:last-child { margin-bottom: 0; }
-.msg .md p { margin: 0 0 10px; }
-.msg .md ul, .msg .md ol { margin: 8px 0 12px; padding-left: 20px; }
-.msg .md li { margin: 4px 0; }
-.msg .md strong { color: var(--gold); font-weight: 600; }
-.msg .md h1, .msg .md h2, .msg .md h3 {
-  font-size: 15px;
-  margin: 16px 0 8px;
-  color: var(--gold);
-}
-.msg .md blockquote {
-  margin: 10px 0;
-  padding-left: 12px;
-  border-left: 2px solid var(--gold);
-  color: var(--muted);
-}
-.msg .md code {
-  background: rgba(255, 255, 255, 0.06);
-  padding: 1px 5px;
-  border-radius: 4px;
-  font-size: 13px;
-}
-
-/* --- Tabs (Talk / Wins) + wins review --- */
+/* Tabs — understated, editorial. */
 .head .tabs {
   display: flex;
-  gap: 8px;
+  gap: 4px;
   margin: 0;
+  order: 3;
+  flex-basis: 100%;
+  margin-top: 4px;
 }
 .head .tabs button {
   background: transparent;
   color: var(--muted);
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 6px 4px;
+  margin-right: 18px;
+  font-family: -apple-system, "Segoe UI", sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+.head .tabs button:hover { color: var(--text); }
+.head .tabs button.on {
+  color: var(--accent-deep);
+  border-bottom-color: var(--accent);
+  font-weight: 500;
+}
+
+/* --- Conversation --- */
+.chat {
+  flex: 1;
+  overflow-y: auto;
+  padding: 30px 2px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.empty {
+  margin: auto;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 17px;
+}
+
+.msg {
+  animation: rise 0.4s ease both;
+}
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* What the person said — a quiet, warm bubble on the right. */
+.msg.user {
+  align-self: flex-end;
+  max-width: 68%;
+  background: var(--accent-soft);
+  color: var(--text);
+  padding: 12px 18px;
+  border-radius: 16px 16px 4px 16px;
+  font-family: -apple-system, "Segoe UI", "Noto Sans TC", sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+/* The coach's reflection — an elegant card, like a letter. */
+.msg.assistant {
+  align-self: stretch;
+  max-width: 780px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px 16px 16px 16px;
+  box-shadow: var(--shadow);
+  padding: 24px 28px;
+}
+.msg.assistant .md {
+  font-family: "Newsreader", Georgia, "Noto Serif TC", serif;
+  font-size: 17.5px;
+  line-height: 1.75;
+  color: var(--text);
+}
+
+/* Markdown inside a reflection. */
+.md > *:first-child { margin-top: 0; }
+.md > *:last-child { margin-bottom: 0; }
+.md p { margin: 0 0 14px; }
+.md strong { font-weight: 600; color: var(--accent-deep); }
+.md em { color: var(--text); }
+.md h1, .md h2, .md h3 {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 500;
+  font-size: 19px;
+  line-height: 1.3;
+  color: var(--text);
+  margin: 22px 0 10px;
+}
+.md ul, .md ol { margin: 10px 0 16px; padding-left: 22px; }
+.md li { margin: 6px 0; }
+.md blockquote {
+  margin: 14px 0;
+  padding: 2px 0 2px 18px;
+  border-left: 2px solid var(--accent);
+  color: var(--muted);
+  font-style: italic;
+}
+.md hr {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 20px 0;
+}
+.md code {
+  background: var(--surface-2);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+/* Play-aloud — a discreet control under a reflection. */
+.msg .speak {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  background: transparent;
+  color: var(--muted);
   border: 1px solid var(--line);
   border-radius: 999px;
-  padding: 5px 16px;
-  font-size: 13px;
+  padding: 4px 14px;
+  font-family: -apple-system, "Segoe UI", sans-serif;
+  font-size: 12.5px;
   cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
 }
-.head .tabs button.on {
-  color: #1a1200;
-  background: var(--gold);
-  border-color: var(--gold);
-  font-weight: 600;
+.msg .speak:hover { color: var(--accent-deep); border-color: var(--accent); }
+
+/* Typing indicator. */
+.msg.assistant.typing {
+  display: inline-flex;
+  gap: 6px;
+  align-self: flex-start;
+  max-width: none;
+  box-shadow: none;
+  padding: 16px 22px;
 }
-.wins-view { gap: 8px; }
-.winday { margin-bottom: 22px; }
-.winday h3 {
-  color: var(--gold);
+.typing span {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.5;
+  animation: blink 1.3s infinite both;
+}
+.typing span:nth-child(2) { animation-delay: 0.2s; }
+.typing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%, 100% { opacity: 0.25; } 50% { opacity: 0.9; } }
+
+/* --- Input bar --- */
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 0 24px;
+}
+.bar input {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 14px 20px;
+  font-family: "Newsreader", Georgia, serif;
+  font-size: 16px;
+  color: var(--text);
+  outline: none;
+  box-shadow: var(--shadow);
+  transition: border-color 0.2s;
+}
+.bar input::placeholder { color: var(--muted); }
+.bar input:focus { border-color: var(--accent); }
+.bar button {
+  border: none;
+  cursor: pointer;
+  font-family: -apple-system, "Segoe UI", sans-serif;
+}
+.bar > button:last-child {
+  background: var(--accent);
+  color: #fffdf9;
+  border-radius: 999px;
+  padding: 13px 24px;
   font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  transition: background 0.2s;
+}
+.bar > button:last-child:hover { background: var(--accent-deep); }
+.bar > button:last-child:disabled { opacity: 0.5; cursor: default; }
+.bar .mic {
+  width: 48px; height: 48px;
+  flex: 0 0 48px;
+  background: var(--surface);
+  color: var(--accent-deep);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  font-size: 18px;
+  box-shadow: var(--shadow);
+  transition: border-color 0.2s, background 0.2s;
+}
+.bar .mic:hover { border-color: var(--accent); }
+.bar .mic.on {
+  background: #b04a3f;
+  color: #fff;
+  border-color: #b04a3f;
+  animation: micpulse 1s infinite;
+}
+@keyframes micpulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+/* --- Sign-in gate: a calm, centered hero --- */
+.app.gate {
+  max-width: 560px;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 26px;
+  padding-bottom: 60px;
+}
+.app.gate .head {
+  display: block;
+  border: none;
+  padding: 0;
+}
+.app.gate .head h1 {
+  font-size: 46px;
+  margin: 0 0 18px;
+  line-height: 1.1;
+}
+.app.gate .head p {
+  display: block;
+  margin: 0 auto;
+  max-width: 380px;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.6;
+}
+.google {
+  background: var(--accent);
+  color: #fffdf9;
+  border: none;
+  border-radius: 999px;
+  padding: 14px 30px;
+  font-family: -apple-system, "Segoe UI", sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: background 0.2s;
+}
+.google:hover { background: var(--accent-deep); }
+
+/* --- Wins review --- */
+.wins-view { gap: 26px; padding-top: 26px; }
+.winday { max-width: 780px; }
+.winday h3 {
+  font-family: -apple-system, "Segoe UI", sans-serif;
+  color: var(--muted);
+  font-size: 12px;
   font-weight: 600;
-  margin: 0 0 8px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--line);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0 0 12px;
 }
 .winblock {
-  background: var(--gold-soft);
-  border-left: 2px solid var(--gold);
-  border-radius: 8px;
-  padding: 10px 14px;
-  margin-bottom: 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 20px 24px;
+  margin-bottom: 12px;
+  font-family: "Newsreader", Georgia, serif;
+  font-size: 17px;
+  line-height: 1.7;
 }
-.winblock ul { margin: 0; padding-left: 18px; }
-.winblock li { margin: 5px 0; }
+.winblock strong { color: var(--accent-deep); font-weight: 600; }
+.winblock ul { margin: 0; padding: 0; list-style: none; }
+.winblock li {
+  margin: 0 0 16px;
+  padding-left: 18px;
+  border-left: 2px solid var(--accent-soft);
+}
+.winblock li:last-child { margin-bottom: 0; }
+.winblock p { margin: 0 0 10px; }
+
+/* --- Landing page (signed out) --- */
+.landing {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 32px 80px;
+  overflow-y: auto;
+  height: 100%;
+}
+.lhero {
+  text-align: center;
+  padding: 90px 0 64px;
+}
+.lmark {
+  font-size: 30px;
+  color: var(--accent);
+  margin-bottom: 22px;
+}
+.lhero h1 {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 500;
+  font-size: 54px;
+  line-height: 1.08;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+.lhero > p {
+  max-width: 540px;
+  margin: 22px auto 34px;
+  font-size: 20px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.lnote {
+  display: block;
+  margin-top: 18px;
+  font-family: -apple-system, "Segoe UI", sans-serif;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+.lfeatures {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+  padding: 24px 0;
+  border-top: 1px solid var(--line);
+}
+.lfeature {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 30px 26px;
+  text-align: center;
+}
+.licon {
+  display: inline-block;
+  font-size: 26px;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+.lfeature h3 {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 500;
+  font-size: 21px;
+  margin-bottom: 10px;
+  color: var(--text);
+}
+.lfeature p {
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+.lfoot {
+  text-align: center;
+  padding: 70px 0 20px;
+}
+.lfoot p {
+  max-width: 520px;
+  margin: 0 auto 28px;
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 24px;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+@media (max-width: 720px) {
+  .lfeatures { grid-template-columns: 1fr; }
+  .lhero h1 { font-size: 40px; }
+  .app { padding: 0 18px; }
+}
