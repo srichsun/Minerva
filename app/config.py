@@ -31,9 +31,15 @@ STT_MODEL = os.getenv("STT_MODEL", "gpt-4o-mini-transcribe")
 # Embedding model for semantic recall over past entries (pgvector).
 OPENAI_EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
 
-# Voice output (TTS). "elevenlabs" (real-sounding, paid plan) is the default;
-# "openai" (coral etc.) is a swappable fallback on the OpenAI key.
-TTS_PROVIDER = os.getenv("TTS_PROVIDER", "elevenlabs")
+# Voice output (TTS). "google" (Cloud TTS — covered by GCP credit, generous
+# free tier, British voices) is the default; "elevenlabs" and "openai" are
+# swappable alternatives.
+TTS_PROVIDER = os.getenv("TTS_PROVIDER", "google")
+# Google Cloud TTS (used when TTS_PROVIDER=google). Chirp3-HD "Callirrhoe" is a
+# natural British female; rate <1 speaks a touch slower.
+GOOGLE_TTS_VOICE = os.getenv("GOOGLE_TTS_VOICE", "en-GB-Chirp3-HD-Callirrhoe")
+GOOGLE_TTS_LANG = os.getenv("GOOGLE_TTS_LANG", "en-GB")
+GOOGLE_TTS_RATE = float(os.getenv("GOOGLE_TTS_RATE", "0.9"))
 # OpenAI TTS voice (used when TTS_PROVIDER=openai): coral/shimmer/nova are warm
 # and female; fable is British-leaning. Any of the gpt-4o-mini-tts voices work.
 TTS_VOICE = os.getenv("TTS_VOICE", "coral")

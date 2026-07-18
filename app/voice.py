@@ -62,6 +62,34 @@ def _speak_openai(text: str, voice: str | None) -> bytes:
     return result.read()
 
 
+_google_tts = None
+
+
+def _speak_google(text: str, voice: str | None) -> bytes:
+    """Google Cloud TTS — a natural British voice, billed to GCP credit. Returns
+    mp3 bytes. Auth is Application Default Credentials (the Cloud Run service
+    account in production)."""
+    global _google_tts
+    if _google_tts is None:
+        from google.cloud import texttospeech
+
+        _google_tts = texttospeech.TextToSpeechClient()
+    from google.cloud import texttospeech
+
+    resp = _google_tts.synthesize_speech(
+        input=texttospeech.SynthesisInput(text=text),
+        voice=texttospeech.VoiceSelectionParams(
+            language_code=config.GOOGLE_TTS_LANG,
+            name=voice or config.GOOGLE_TTS_VOICE,
+        ),
+        audio_config=texttospeech.AudioConfig(
+            audio_encoding=texttospeech.AudioEncoding.MP3,
+            speaking_rate=config.GOOGLE_TTS_RATE,
+        ),
+    )
+    return resp.audio_content
+
+
 def _speak_elevenlabs(text: str, voice: str | None) -> bytes:
     """ElevenLabs TTS — the real-sounding voice. Returns mp3 bytes.
 
@@ -81,4 +109,6 @@ def speak(text: str, voice: str | None = None) -> bytes:
     text = _plain(text)  # don't read Markdown symbols aloud / waste characters
     if config.TTS_PROVIDER == "openai":
         return _speak_openai(text, voice)
-    return _speak_elevenlabs(text, voice)
+    if config.TTS_PROVIDER == "elevenlabs":
+        return _speak_elevenlabs(text, voice)
+    return _speak_google(text, voice)
