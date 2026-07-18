@@ -4,7 +4,7 @@ PGVector needs a real Postgres with the vector extension, which we can't run
 here, so we mock the store. These tests check the glue: that we call the store
 the way we mean to, and format its results for the coach.
 """
-from app import recall
+from app.services import recall
 
 
 class _FakeStore:
@@ -55,7 +55,7 @@ def test_recall_filters_by_user(monkeypatch):
 
 
 def test_search_past_entries_tool_uses_current_user(monkeypatch):
-    from app import auth
+    from app.core import security as auth
 
     seen = {}
     monkeypatch.setattr(

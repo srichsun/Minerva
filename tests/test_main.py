@@ -8,7 +8,8 @@ from datetime import datetime, timezone
 
 from fastapi.testclient import TestClient
 
-from app import auth, entries, voice
+from app.core import security as auth
+from app.services import entries, voice
 from app.main import app
 
 client = TestClient(app)

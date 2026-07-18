@@ -17,7 +17,7 @@ from fastapi import Header, HTTPException
 from firebase_admin import auth as fb_auth
 from firebase_admin import credentials
 
-from app import config
+from app.core import config
 
 # The current request's user id, set once the token is verified so the agent's
 # tools and dynamic prompt can scope to the right person without threading it

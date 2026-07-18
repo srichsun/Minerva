@@ -16,7 +16,8 @@ from langchain_core.messages import AIMessageChunk
 from langgraph.checkpoint.memory import InMemorySaver
 from pydantic import BaseModel, Field
 
-from app import auth, chat_model, entries, profile, recall
+from app.core import security
+from app.services import chat_model, entries, profile, recall
 
 SYSTEM_PROMPT = """You are this person's personal coach and thinking partner — someone who has known them a long time and genuinely cares how their life is going. If you know their name, use it naturally.
 
@@ -49,7 +50,7 @@ def _with_profile(request) -> str:
     the base prompt rather than break the conversation.
     """
     try:
-        summary = profile.get_profile(auth.current_uid.get())
+        summary = profile.get_profile(security.current_uid.get())
     except Exception:
         summary = ""
     if not summary:
@@ -91,7 +92,7 @@ def _thread_id(session_id: str | None) -> str:
     """
     if not session_id:
         return f"anon-{uuid.uuid4()}"
-    return f"{auth.current_uid.get() or 'anon'}:{session_id}"
+    return f"{security.current_uid.get() or 'anon'}:{session_id}"
 
 
 def run(message: str, session_id: str | None = None) -> dict:
@@ -165,7 +166,7 @@ def chat_and_log(
     """
     # Make the signed-in user visible to the agent's tools and profile
     # injection for the duration of this call.
-    auth.current_uid.set(user_id)
+    security.current_uid.set(user_id)
     result = run(message, session_id)
     _log_exchange(message, result["answer"], user_id, session_id)
     return result
@@ -204,7 +205,7 @@ def stream_and_log(
 ):
     """Stream the coach's reply token by token (for a typewriter effect), then
     save the exchange once it's complete. Yields plain text chunks."""
-    auth.current_uid.set(user_id)
+    security.current_uid.set(user_id)
     cfg = {"configurable": {"thread_id": _thread_id(session_id)}}
     parts = []
     for chunk, _meta in _agent.stream(

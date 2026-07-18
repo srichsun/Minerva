@@ -4,7 +4,7 @@ so they need no Postgres server and spend no time on I/O.
 The sqlite_db fixture lives in conftest.py."""
 from datetime import datetime, timezone
 
-from app import entries
+from app.services import entries
 
 
 def test_save_and_read_back(sqlite_db):

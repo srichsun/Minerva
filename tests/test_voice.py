@@ -1,5 +1,6 @@
 """Voice backend tests — no real API calls; the TTS clients are faked."""
-from app import config, voice
+from app.core import config
+from app.services import voice
 
 
 def test_speak_uses_elevenlabs_by_default(monkeypatch):

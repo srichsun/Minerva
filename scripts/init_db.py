@@ -3,7 +3,7 @@
     docker compose up -d
     uv run python -m scripts.init_db
 """
-from app import db
+from app.core import db
 
 if __name__ == "__main__":
     db.init_db()

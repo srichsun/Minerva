@@ -10,7 +10,8 @@ re-reading the whole history.
 
 Fixed size on purpose: injected every turn, so it must not grow without bound.
 """
-from app import chat_model, db, entries
+from app.core import db
+from app.services import chat_model, entries
 from app.models import Profile
 
 # Re-condense the profile once this many new entries have accumulated. Cheap,

@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from langchain_core.language_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 
-from app import agent, entries
+from app.services import agent, entries
 
 
 def _coach_with(replies):

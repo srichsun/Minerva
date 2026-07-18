@@ -5,7 +5,7 @@ that we gather one person's recent entries, save the condensed text keyed by
 their uid, count what's folded in, and only re-condense once enough new entries
 have accumulated.
 """
-from app import entries, profile
+from app.services import entries, profile
 
 U = "u-profile"
 

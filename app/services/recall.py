@@ -15,7 +15,7 @@ from langchain_core.tools import tool
 from langchain_openai import OpenAIEmbeddings
 from langchain_postgres import PGVector
 
-from app import auth, config
+from app.core import config, security
 
 # Kept separate from the SQL `entries` table; PGVector manages its own tables.
 COLLECTION_NAME = "journal_entries"
@@ -73,7 +73,7 @@ def search_past_entries(query: str) -> str:
     history — what they said before, recurring patterns, or similar feelings —
     instead of guessing. The query should describe the current topic or feeling."""
     # Scope to whoever is signed in for this request.
-    hits = recall(query, user_id=auth.current_uid.get())
+    hits = recall(query, user_id=security.current_uid.get())
     if not hits:
         return "No related past entries found."
     return "\n\n".join(f"- {h}" for h in hits)

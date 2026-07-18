@@ -8,7 +8,7 @@ factory without importing each other.
 from langchain_anthropic import ChatAnthropic
 from langchain_openai import ChatOpenAI
 
-from app import config
+from app.core import config
 
 
 def build_chat_model():

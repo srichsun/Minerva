@@ -13,7 +13,7 @@ import re
 from elevenlabs.client import ElevenLabs
 from openai import OpenAI
 
-from app import config
+from app.core import config
 
 _openai = OpenAI(api_key=config.OPENAI_API_KEY)
 _eleven = ElevenLabs(api_key=config.ELEVENLABS_API_KEY)

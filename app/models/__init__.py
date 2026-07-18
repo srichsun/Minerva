@@ -1,0 +1,12 @@
+"""Database models.
+
+Importing every model here matters: `Base.metadata` only knows about tables
+whose module has been imported, so `create_all` would silently skip any model
+nobody imported yet. It also lets callers write `from app.models import Entry`
+without caring which file it lives in.
+"""
+from app.models.base import Base
+from app.models.entry import Entry
+from app.models.profile import Profile
+
+__all__ = ["Base", "Entry", "Profile"]

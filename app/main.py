@@ -1,14 +1,17 @@
-"""FastAPI entrypoint for the life-coach journaling app."""
+"""FastAPI entrypoint — assembly only.
+
+This file wires the app together and nothing else: middleware, the API routes
+(see app/api/), and the built frontend. All the actual work lives in
+app/services/; the endpoints themselves live in app/api/routes/.
+"""
 import os
-from datetime import date, datetime, timezone
 
-from fastapi import Depends, FastAPI, File, UploadFile
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
 
-from app import agent, auth, config, db, entries, profile, voice
+from app.api.router import api_router
+from app.core import db
 
 app = FastAPI(title="Performance Coach")
 
@@ -25,6 +28,7 @@ def _ensure_tables() -> None:
     except Exception:
         pass
 
+
 # Allow the local React dev server (Vite) to call this API from the browser.
 app.add_middleware(
     CORSMiddleware,
@@ -33,111 +37,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-class TalkRequest(BaseModel):
-    question: str
-    session_id: str | None = None  # pass the same id to continue a conversation
-
-
-class TalkResponse(BaseModel):
-    answer: str
-    session_id: str | None = None
-
-
-class SpeakRequest(BaseModel):
-    text: str
-
-
-def _entry_dict(e) -> dict:
-    """Turn a stored Entry into plain JSON for the review screens."""
-    return {
-        "id": e.id,
-        "created_at": e.created_at.isoformat(),
-        "mood": e.mood,
-        "wins": e.wins,
-        "themes": e.themes,
-        "transcript": e.transcript,
-        "ai_reply": e.ai_reply,
-    }
-
-
-@app.get("/health")
-def health():
-    """Liveness check — no dependencies, no API key needed."""
-    return {"status": "ok"}
-
-
-@app.post("/agent", response_model=TalkResponse)
-def agent_endpoint(req: TalkRequest, uid: str = Depends(auth.current_user)):
-    """Talk to the coach. The exchange is saved as a journal entry.
-
-    Requires sign-in; pass a session_id to keep memory across follow-ups.
-    """
-    return agent.chat_and_log(req.question, user_id=uid, session_id=req.session_id)
-
-
-@app.post("/agent/stream")
-def agent_stream(req: TalkRequest, uid: str = Depends(auth.current_user)):
-    """Same as /agent, but streams the reply token by token (typewriter effect).
-    The exchange is saved once streaming completes."""
-    return StreamingResponse(
-        agent.stream_and_log(req.question, user_id=uid, session_id=req.session_id),
-        media_type="text/plain",
-    )
-
-
-@app.post("/transcribe")
-async def transcribe(audio: UploadFile = File(...), uid: str = Depends(auth.current_user)):
-    """Turn recorded audio into text (Whisper only). The browser then streams
-    the reply via /agent/stream, so voice replies type out live like typed ones."""
-    data = await audio.read()
-    return {"text": voice.transcribe(data, audio.filename or "audio.webm")}
-
-
-@app.post("/speak")
-def speak(req: SpeakRequest, uid: str = Depends(auth.current_user)):
-    """Turn text into spoken audio (mp3) so the browser can play it.
-
-    Requires sign-in — TTS costs real money per character, so this must not be
-    open to the world. If the TTS provider fails (e.g. an out-of-quota plan),
-    return 503 with a short reason instead of a raw 500 — the UI skips playback.
-    """
-    try:
-        audio = voice.speak(req.text)
-    except Exception as e:
-        print(f"TTS failed ({config.TTS_PROVIDER}): {e!r}", flush=True)
-        return Response(content=str(e)[:200], media_type="text/plain", status_code=503)
-    return Response(content=audio, media_type="audio/mpeg")
-
-
-@app.get("/entries")
-def entries_on_day(day: str | None = None, uid: str = Depends(auth.current_user)):
-    """Recall one day's entries. `day` is YYYY-MM-DD; defaults to today (UTC)."""
-    d = date.fromisoformat(day) if day else datetime.now(timezone.utc).date()
-    rows = entries.entries_on(d, user_id=uid)
-    return {"day": d.isoformat(), "entries": [_entry_dict(r) for r in rows]}
-
-
-@app.get("/wins")
-def wins(uid: str = Depends(auth.current_user)):
-    """List the entries where the coach recorded wins, newest first (for the
-    review screen)."""
-    rows = entries.recent_wins(user_id=uid, limit=200)
-    return {"wins": [_entry_dict(r) for r in rows]}
-
-
-@app.get("/profile")
-def get_profile(uid: str = Depends(auth.current_user)):
-    """The long-term profile the coach has built up about the person."""
-    return {"profile": profile.get_profile(uid)}
-
-
-@app.post("/profile/refresh")
-def refresh_profile(uid: str = Depends(auth.current_user)):
-    """Force a re-condense of the profile from recent entries (normally this
-    happens on its own every few entries)."""
-    return {"profile": profile.refresh_profile(uid)}
-
+app.include_router(api_router)
 
 # Serve the built React frontend (if present) so the whole app lives at one URL.
 # Mounted last, at "/", so the API routes above always take precedence; only

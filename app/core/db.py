@@ -6,7 +6,7 @@ Tests swap in an in-memory SQLite engine, so they need no running server.
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from app import config
+from app.core import config
 from app.models import Base
 
 engine = create_engine(config.DATABASE_URL)

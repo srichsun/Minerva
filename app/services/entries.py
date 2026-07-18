@@ -9,7 +9,7 @@ from datetime import date, datetime, time, timezone
 
 from sqlalchemy import func, select
 
-from app import db
+from app.core import db
 from app.models import Entry
 
 
