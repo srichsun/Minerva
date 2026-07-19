@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------ *
- * Performance Coach — a calm, elegant, editorial interface.
+ * Minerva — a calm, elegant, editorial interface.
  * ------------------------------------------------------------------ */
 
 .app {
@@ -28,7 +28,18 @@
   color: var(--text);
   margin: 0 auto 0 0;
 }
-.head p { display: none; }
+/* A standing note under her name — small, quiet, always there. */
+.head .creed {
+  flex-basis: 100%;
+  order: 2;
+  max-width: 640px;
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--muted);
+  opacity: 0.85;
+}
 .head .who {
   display: flex;
   align-items: center;

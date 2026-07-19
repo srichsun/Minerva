@@ -258,10 +258,10 @@ export default function App() {
       <div className="landing">
         <header className="lhero">
           <div className="lmark">◈</div>
-          <h1>Performance Coach</h1>
+          <h1>Minerva</h1>
           <p>
-            A voice AI coach that listens to your day, remembers who you are,
-            and helps you see how far you've come.
+            A voice companion who listens to your day, remembers who you
+            are, and reminds you what you're capable of.
           </p>
           <button className="google" onClick={() => signInWithGoogle()}>
             Sign in with Google
@@ -298,8 +298,7 @@ export default function App() {
 
         <footer className="lfoot">
           <p>
-            Unlike a chatbot that forgets you, it carries your whole story —
-            while every reply stays sharp, warm, and personal.
+            Just in case no one told you yet today: I love you, and I believe in your ability to change your life for the better.
           </p>
           <button className="google" onClick={() => signInWithGoogle()}>
             Get started
@@ -312,8 +311,8 @@ export default function App() {
   return (
     <div className="app">
       <header className="head">
-        <h1>Performance Coach</h1>
-        <p>Talk about your day — I'll remember, and help you see your wins.</p>
+        <h1>Minerva</h1>
+        <p className="creed">Just in case no one told you yet today: I love you, and I believe in your ability to change your life for the better.</p>
         <div className="who">
           <span>{user.displayName || user.email}</span>
           <button className="signout" onClick={() => signOutUser()}>

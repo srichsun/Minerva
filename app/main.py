@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api.router import api_router
 from app.core import db
 
-app = FastAPI(title="Performance Coach")
+app = FastAPI(title="Minerva")
 
 
 @app.on_event("startup")
