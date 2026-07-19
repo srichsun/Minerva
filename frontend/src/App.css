@@ -197,6 +197,11 @@
   transition: color 0.2s, border-color 0.2s;
 }
 .msg .speak:hover { color: var(--accent-deep); border-color: var(--accent); }
+/* Fetching speech takes a few seconds — say so, and keep it visibly alive. */
+.msg .speak.busy { color: var(--accent-deep); border-color: var(--accent); }
+/* Only the spinner moves — a blinking button reads as an error. */
+.msg .speak.busy svg { animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* Typing indicator. */
 .msg.assistant.typing {

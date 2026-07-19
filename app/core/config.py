@@ -36,10 +36,12 @@ OPENAI_EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-s
 # swappable alternatives.
 TTS_PROVIDER = os.getenv("TTS_PROVIDER", "google")
 # Google Cloud TTS (used when TTS_PROVIDER=google). Chirp3-HD "Callirrhoe" is a
-# natural British female; rate <1 speaks a touch slower.
+# natural British female. Rate stays at 1.0: slowing her down was meant to sound
+# calm and just sounded robotic — the unhurried feeling comes from the writing,
+# not from dragging out the delivery.
 GOOGLE_TTS_VOICE = os.getenv("GOOGLE_TTS_VOICE", "en-GB-Chirp3-HD-Callirrhoe")
 GOOGLE_TTS_LANG = os.getenv("GOOGLE_TTS_LANG", "en-GB")
-GOOGLE_TTS_RATE = float(os.getenv("GOOGLE_TTS_RATE", "0.9"))
+GOOGLE_TTS_RATE = float(os.getenv("GOOGLE_TTS_RATE", "1.0"))
 # OpenAI TTS voice (used when TTS_PROVIDER=openai): coral/shimmer/nova are warm
 # and female; fable is British-leaning. Any of the gpt-4o-mini-tts voices work.
 TTS_VOICE = os.getenv("TTS_VOICE", "coral")

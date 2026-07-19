@@ -43,6 +43,36 @@ function dayLabel(day) {
   });
 }
 
+// Line icons for the play control. Drawn rather than emoji so they inherit the
+// text colour and match the hairline weight the rest of the page uses.
+function PlayIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true">
+      <path d="M4 2.6 L11.4 7 L4 11.4 Z" fill="currentColor" />
+    </svg>
+  );
+}
+
+function StopIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true">
+      <rect x="3.4" y="3" width="2.6" height="8" rx="0.9" fill="currentColor" />
+      <rect x="8" y="3" width="2.6" height="8" rx="0.9" fill="currentColor" />
+    </svg>
+  );
+}
+
+function WaitIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true">
+      <circle cx="7" cy="7" r="5.4" fill="none" stroke="currentColor"
+              strokeWidth="1.4" opacity="0.25" />
+      <path d="M7 1.6 A5.4 5.4 0 0 1 12.4 7" fill="none" stroke="currentColor"
+            strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 // A tiny silent clip used to "unlock" the audio element inside a tap, so the
 // browser (iOS Safari, Chrome) lets the reply — fetched a moment later — play.
 const SILENT =
@@ -104,6 +134,10 @@ export default function App() {
   // the person asks for it.
   const audioRef = useRef(null);
   const [speakingIdx, setSpeakingIdx] = useState(null); // which msg is playing
+  const [loadingIdx, setLoadingIdx] = useState(null);   // which msg is fetching
+  // Speech already fetched this session, so replaying is instant and free.
+  const audioCache = useRef(new Map());
+  const abortRef = useRef(null); // lets a second tap cancel a request in flight
 
   // Auto-scroll to the newest message whenever the list changes.
   const bottom = useRef(null);
@@ -160,15 +194,29 @@ export default function App() {
     };
   }, [user, view]);
 
-  // Read one reply aloud — called from a tap on its speaker button. Tapping the
-  // same button again while it's playing stops it.
+  // Read one reply aloud — called from a tap on its speaker button.
+  //
+  // Speech takes a few seconds to come back, which used to look broken: no
+  // feedback, so people tapped again and again and got overlapping audio. Now
+  // the button says what it's doing, a second tap always means stop (even
+  // mid-request), and each reply is only ever fetched once.
   async function playReply(text, idx) {
     const a = audioRef.current || (audioRef.current = new Audio());
-    if (speakingIdx === idx) {
+
+    // Tapping the same reply again — loading or playing — means stop.
+    if (speakingIdx === idx || loadingIdx === idx) {
+      abortRef.current?.abort();
       a.pause();
       setSpeakingIdx(null);
+      setLoadingIdx(null);
       return;
     }
+
+    // Switching to a different reply: abandon whatever was in flight.
+    abortRef.current?.abort();
+    a.pause();
+    setSpeakingIdx(null);
+
     // Unlock playback NOW, synchronously inside the tap — browsers block a
     // play() called later (after the await), which is why sound was missing.
     try {
@@ -177,24 +225,41 @@ export default function App() {
     } catch {
       /* ignore */
     }
+
+    // Already fetched once this session: replay instantly, and don't pay for
+    // the same audio twice.
+    const cached = audioCache.current.get(text);
+    if (cached) {
+      startPlaying(a, cached, idx);
+      return;
+    }
+
+    setLoadingIdx(idx);
+    const controller = new AbortController();
+    abortRef.current = controller;
     try {
-      setSpeakingIdx(idx);
       const res = await authFetch(`${API}/speak`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
+        signal: controller.signal,
       });
-      if (!res.ok) {
-        setSpeakingIdx(null);
-        return;
-      }
-      a.pause();
-      a.src = URL.createObjectURL(await res.blob());
-      a.onended = () => setSpeakingIdx(null);
-      await a.play();
+      setLoadingIdx(null);
+      if (!res.ok) return; // speech failed; the text is still there
+      const url = URL.createObjectURL(await res.blob());
+      audioCache.current.set(text, url);
+      startPlaying(a, url, idx);
     } catch {
-      setSpeakingIdx(null); // speech failed; the text is still there
+      setLoadingIdx(null); // aborted by another tap, or the request failed
     }
+  }
+
+  function startPlaying(a, url, idx) {
+    a.pause();
+    a.src = url;
+    a.onended = () => setSpeakingIdx(null);
+    setSpeakingIdx(idx);
+    a.play().catch(() => setSpeakingIdx(null));
   }
 
   // Stream the coach's reply to a question into a new assistant bubble, typing
@@ -453,11 +518,30 @@ export default function App() {
             {m.role === "assistant" && m.text && (
               <button
                 type="button"
-                className="speak"
                 onClick={() => playReply(m.text, i)}
-                title={speakingIdx === i ? "Stop" : "Play aloud"}
+                title={
+                  loadingIdx === i || speakingIdx === i ? "Stop" : "Play aloud"
+                }
+                className={
+                  "speak" + (loadingIdx === i ? " busy" : "")
+                }
               >
-                {speakingIdx === i ? "⏸ Playing…" : "🔊 Play"}
+                {loadingIdx === i ? (
+                  <>
+                    <WaitIcon />
+                    Preparing her voice…
+                  </>
+                ) : speakingIdx === i ? (
+                  <>
+                    <StopIcon />
+                    Stop
+                  </>
+                ) : (
+                  <>
+                    <PlayIcon />
+                    Listen
+                  </>
+                )}
               </button>
             )}
           </div>
