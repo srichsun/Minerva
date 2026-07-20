@@ -382,6 +382,113 @@
   color: var(--accent);
 }
 
+/* --- Mantra: lines you chose to keep --- *
+ * Set as quotations, larger than anything around them, because the whole
+ * point is that these read as weightier than the day's chatter.
+ */
+.mantra-view { gap: 14px; padding-top: 30px; }
+
+.mantra-add {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 720px;
+  margin-bottom: 14px;
+}
+.mantra-add input {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 12px 20px;
+  font-family: "Newsreader", Georgia, "Noto Serif TC", serif;
+  font-size: 16px;
+  color: var(--text);
+  outline: none;
+  box-shadow: var(--shadow);
+  transition: border-color 0.2s;
+}
+.mantra-add input:focus { border-color: var(--accent); }
+.mantra-add input::placeholder { color: var(--muted); }
+.mantra-add .mic {
+  width: 42px; height: 42px;
+  flex: 0 0 42px;
+  background: var(--surface);
+  color: var(--accent-deep);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+.mantra-add .mic.on {
+  background: #b04a3f;
+  color: #fff;
+  border-color: #b04a3f;
+  animation: micpulse 1s infinite;
+}
+.mantra-add .keep {
+  background: var(--accent);
+  color: #fffdf9;
+  border: none;
+  border-radius: 999px;
+  padding: 11px 22px;
+  font-family: -apple-system, "Segoe UI", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.mantra-add .keep:hover { background: var(--accent-deep); }
+
+.mantra {
+  position: relative;
+  max-width: 720px;
+  margin: 0;
+  padding: 20px 46px 20px 26px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--accent);
+  border-radius: 0 14px 14px 0;
+  box-shadow: var(--shadow);
+}
+.mantra p {
+  font-family: "Newsreader", Georgia, "Noto Serif TC", serif;
+  font-size: 19px;
+  line-height: 1.6;
+  color: var(--text);
+  cursor: text;
+}
+.mantra input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--accent);
+  padding: 0 0 3px;
+  font-family: "Newsreader", Georgia, "Noto Serif TC", serif;
+  font-size: 19px;
+  line-height: 1.6;
+  color: var(--text);
+  outline: none;
+}
+.mantra .drop {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 19px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, color 0.2s;
+}
+.mantra:hover .drop { opacity: 1; }
+.mantra .drop:hover { color: #b04a3f; }
+/* Touch screens have no hover, so the control has to stay visible. */
+@media (hover: none) { .mantra .drop { opacity: 0.5; } }
+
 /* --- Landing page (signed out) --- */
 .landing {
   max-width: 980px;

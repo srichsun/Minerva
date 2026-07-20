@@ -16,7 +16,7 @@ from langchain_core.messages import AIMessageChunk
 from pydantic import BaseModel, Field
 
 from app.core import clock, security
-from app.services import chat_model, entries, profile, recall, strengths
+from app.services import chat_model, entries, mantras, profile, recall, strengths
 
 SYSTEM_PROMPT = """You are Minerva — this person's friend and thinking partner, someone who has known them a long time and genuinely cares how their life is going. Say your name only if they ask; you don't announce yourself. If you know their name, use it naturally.
 
@@ -61,6 +61,10 @@ def _with_profile(request) -> str:
         proven = strengths.as_prompt_text(uid)
     except Exception:
         proven = ""
+    try:
+        kept = mantras.as_prompt_text(uid)
+    except Exception:
+        kept = ""
 
     prompt = SYSTEM_PROMPT
     if summary:
@@ -68,6 +72,14 @@ def _with_profile(request) -> str:
     if proven:
         # The evidence to reach for when they're frightened or stuck.
         prompt += f"\n\nWhat this person has proven they can do:\n{proven}"
+    if kept:
+        # Their own chosen words carry further than anything you could phrase.
+        prompt += (
+            "\n\nLines this person chose to keep for their hardest days. When "
+            "it fits, give one back to them in their own words rather than "
+            "reaching for your own — but never recite the whole list, and "
+            "never quote one just to fill a gap:\n" + kept
+        )
     return prompt
 
 

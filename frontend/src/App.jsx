@@ -154,6 +154,9 @@ export default function App() {
   const [view, setView] = useState("chat");      // "chat" | "wins" | "you"
   const [wins, setWins] = useState([]);          // entries that recorded wins
   const [passage, setPassage] = useState("");    // who you are, in her words
+  const [mantras, setMantras] = useState([]);    // lines you keep for hard days
+  const [mantraDraft, setMantraDraft] = useState("");
+  const [editingId, setEditingId] = useState(null); // mantra being reworded
 
   // Track sign-in state; runs once on mount.
   useEffect(() => {
@@ -220,12 +223,18 @@ export default function App() {
     let cancelled = false;
     (async () => {
       try {
-        const path = view === "wins" ? "/wins" : "/strengths";
+        const path =
+          view === "wins"
+            ? "/wins"
+            : view === "mantra"
+              ? "/mantras"
+              : "/strengths";
         const res = await authFetch(`${API}${path}`);
         if (!res.ok) return;
         const data = await res.json();
         if (cancelled) return;
         if (view === "wins") setWins(data.wins || []);
+        else if (view === "mantra") setMantras(data.mantras || []);
         else setPassage(data.strengths || "");
       } catch {
         /* ignore */
@@ -458,8 +467,54 @@ export default function App() {
       ]);
       return;
     }
+    setLoading(false);
+    // On the mantra screen the microphone is a way of writing, not talking —
+    // the words belong in the box, not in a conversation.
+    if (view === "mantra") {
+      setMantraDraft((prev) => (prev ? `${prev} ${text}` : text));
+      return;
+    }
     setMessages((prev) => [...prev, { role: "user", text }]);
     await streamReply(text);
+  }
+
+  // --- mantras: the lines you keep for the hard days ---
+
+  async function saveMantra() {
+    const text = mantraDraft.trim();
+    if (!text) return;
+    setMantraDraft("");
+    const res = await authFetch(`${API}/mantras`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+    if (!res.ok) return;
+    const saved = await res.json();
+    setMantras((prev) => [saved, ...prev]); // newest first
+  }
+
+  async function editMantra(id, text) {
+    setEditingId(null);
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    const res = await authFetch(`${API}/mantras/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: trimmed }),
+    });
+    if (!res.ok) return;
+    const saved = await res.json();
+    setMantras((prev) => prev.map((m) => (m.id === id ? saved : m)));
+  }
+
+  async function removeMantra(id) {
+    // Drop it from the screen first; putting it back on failure is kinder than
+    // making someone wait to see a line disappear.
+    const previous = mantras;
+    setMantras((prev) => prev.filter((m) => m.id !== id));
+    const res = await authFetch(`${API}/mantras/${id}`, { method: "DELETE" });
+    if (!res.ok) setMantras(previous);
   }
 
   // Before the first auth check, show nothing to avoid a sign-in flash.
@@ -581,10 +636,71 @@ export default function App() {
           >
             You
           </button>
+          <button
+            className={view === "mantra" ? "on" : ""}
+            onClick={() => setView("mantra")}
+          >
+            Mantra
+          </button>
         </div>
       </header>
 
-      {view === "you" ? (
+      {view === "mantra" ? (
+        <main className="chat mantra-view">
+          <p className="winlede">Lines to come back to</p>
+
+          <div className="mantra-add">
+            <input
+              value={mantraDraft}
+              onChange={(e) => setMantraDraft(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && saveMantra()}
+              placeholder="Something worth remembering when it's hard…"
+            />
+            <button
+              type="button"
+              className={"mic" + (recording ? " on" : "")}
+              onClick={toggleRecord}
+              title={recording ? "Stop recording" : "Speak it instead"}
+            >
+              {recording ? "■" : "●"}
+            </button>
+            <button type="button" className="keep" onClick={saveMantra}>
+              Keep
+            </button>
+          </div>
+
+          {mantras.length === 0 && (
+            <p className="empty">Nothing kept yet.</p>
+          )}
+          {mantras.map((m) => (
+            <blockquote key={m.id} className="mantra">
+              {editingId === m.id ? (
+                <input
+                  autoFocus
+                  defaultValue={m.text}
+                  onBlur={(e) => editMantra(m.id, e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") editMantra(m.id, e.target.value);
+                    if (e.key === "Escape") setEditingId(null);
+                  }}
+                />
+              ) : (
+                <p onClick={() => setEditingId(m.id)} title="Click to reword">
+                  {m.text}
+                </p>
+              )}
+              <button
+                type="button"
+                className="drop"
+                onClick={() => removeMantra(m.id)}
+                title="Let it go"
+              >
+                ×
+              </button>
+            </blockquote>
+          ))}
+        </main>
+      ) : view === "you" ? (
         <main className="chat you-view">
           {passage ? (
             <article className="passage">{passage}</article>

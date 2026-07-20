@@ -7,6 +7,7 @@ without caring which file it lives in.
 """
 from app.models.base import Base
 from app.models.entry import Entry
+from app.models.mantra import Mantra
 from app.models.profile import Profile
 
-__all__ = ["Base", "Entry", "Profile"]
+__all__ = ["Base", "Entry", "Mantra", "Profile"]
