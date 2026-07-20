@@ -31,3 +31,32 @@ jobs:
 
       - name: Test
         run: uv run pytest -q
+
+  deploy:
+    # Only main, and only once the tests are green.
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # required to mint the OIDC token Google trusts
+    steps:
+      - uses: actions/checkout@v4
+
+      # No service-account key anywhere: GitHub proves who it is with a
+      # short-lived OIDC token and Google hands back a short-lived credential.
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOY_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy daily-coach \
+            --source . \
+            --region asia-east1 \
+            --project ${{ secrets.GCP_PROJECT }} \
+            --quiet

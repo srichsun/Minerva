@@ -1,0 +1,20 @@
+# What gets uploaded to Cloud Build. Without this file gcloud falls back to the
+# top-level .gitignore only — it does not read frontend/.gitignore, so
+# node_modules (200MB+) was being uploaded on every deploy.
+.gcloudignore
+.git
+.github
+.gitignore
+
+.venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+
+# The image builds the frontend itself; it needs the source, not these.
+frontend/node_modules/
+frontend/dist/
+
+.env
+secrets/
+.DS_Store
