@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Minerva</title>
-<meta name="description" content="A voice AI friend with three layers of memory — it listens, remembers, and gets to know you over time. Built on FastAPI, LangChain, and Claude.">
+<meta name="description" content="A voice AI friend with three layers of memory — she listens, remembers, and gets to know you over time. Built on FastAPI, LangChain, and OpenAI.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>">
 <style>
   :root{
@@ -125,15 +125,16 @@
 
 <header><div class="wrap">
   <div class="kicker" data-en="Voice · Memory · Agent" data-zh="語音 · 記憶 · Agent"></div>
-  <h1 data-en="A friend for the<br><em>hard days.</em>" data-zh="跟一個<br><em>記得你的Minerva</em>聊聊。"></h1>
-  <p class="lede" data-en="A voice AI friend for the moments that derail a day — when fear takes over, when nothing feels clear enough to decide, when you've forgotten what you're capable of. She steadies you, helps you think it through, and remembers everything you've already come through." data-zh="一個你每天用講的來聊的語音 AI Minerva。它聽、把聽到的重點反映回來、幫你注意到小小的成就 —— 而且跟無狀態聊天機器人不一樣，它會記得。三層記憶讓它扛著一輩子的日誌，卻讓每次 prompt 維持固定大小。"></p>
+  <h1 data-en="A friend for the<br><em>hard days.</em>" data-zh="難熬的時候，<br><em>有人在。</em>"></h1>
+  <p class="lede" data-en="A voice AI friend for the moments that derail a day — when fear takes over, when nothing feels clear enough to decide, when you've forgotten what you're capable of. She steadies you, helps you think it through, and remembers everything you've already come through." data-zh="一個陪你度過難熬時刻的語音 AI 朋友 —— 恐懼上來的時候、混沌到無法做決定的時候、忘記自己有多少能耐的時候。她穩住你、陪你把事情想清楚，並且記得你已經走過的每一段。"></p>
   <div class="cta">
-    <a class="btn primary" href="https://github.com/srichsun/Minerva" target="_blank" rel="noopener" data-en="View source" data-zh="看原始碼"></a>
+    <a class="btn primary" href="https://daily-coach-592904365774.asia-east1.run.app/" target="_blank" rel="noopener" data-en="Try it live" data-zh="線上試用"></a>
+    <a class="btn" href="https://github.com/srichsun/Minerva" target="_blank" rel="noopener" data-en="View source" data-zh="看原始碼"></a>
     <a class="btn" href="#memory" data-en="How the memory works" data-zh="記憶怎麼運作"></a>
   </div>
   <div class="metrics">
     <div class="metric"><b>3</b><span data-en="layers of memory" data-zh="層記憶"></span></div>
-    <div class="metric"><b>8</b><span data-en="API endpoints" data-zh="API endpoint"></span></div>
+    <div class="metric"><b>15</b><span data-en="API endpoints" data-zh="API endpoint"></span></div>
     <div class="metric"><b>0</b><span data-en="keys in the repo" data-zh="key 進 repo"></span></div>
   </div>
 </div></header>
@@ -145,7 +146,7 @@
   <div class="grid">
     <div class="card"><div class="n">01</div>
       <h3 data-en="Talk, don't type" data-zh="用講的，不用打字"></h3>
-      <p data-en="Tap the mic and speak. Whisper transcribes you, Minerva replies, and ElevenLabs reads the answer back in a warm voice." data-zh="點麥克風開口說。Whisper 幫你轉錄，Minerva回覆，ElevenLabs 再用溫暖的嗓音把答案唸回來。"></p></div>
+      <p data-en="Tap the mic and speak. OpenAI transcribes you, Minerva replies, and Google Cloud TTS reads the answer back in a real British voice." data-zh="點麥克風開口說。OpenAI 幫你轉錄，Minerva 回覆，Google Cloud TTS 再用真正的英國腔把答案唸回來。"></p></div>
     <div class="card"><div class="n">02</div>
       <h3 data-en="It remembers" data-zh="它會記得"></h3>
       <p data-en="Every exchange is saved as a journal entry. Nothing is forgotten when you close the tab — the whole point a stateless chatbot can't manage." data-zh="每次對話都存成一筆日誌。關掉分頁不會被忘記 —— 這正是無狀態聊天機器人做不到的關鍵。"></p></div>
@@ -153,8 +154,8 @@
       <h3 data-en="Gets to know you" data-zh="越來越懂你"></h3>
       <p data-en="A rolling, LLM-condensed profile — your goals, habits, triggers, what helps — is injected into every reply, so Minerva always talks with a fresh sense of who you are." data-zh="一份滾動、由 LLM 濃縮的 profile（目標、習慣、地雷、什麼有用）注入每次回覆，讓Minerva總是帶著對你最新的理解說話。"></p></div>
     <div class="card"><div class="n">04</div>
-      <h3 data-en="Look back anytime" data-zh="隨時回頭看"></h3>
-      <p data-en="Recall any day, watch your wins add up, and see mood trends — plain SQL over your journal, no AI needed for the review screens." data-zh="回顧任何一天、看成就一點一點累積、看心情趨勢 —— 對日誌下純 SQL，回顧畫面完全不需要 AI。"></p></div>
+      <h3 data-en="Wins, You, and Mantra" data-zh="Wins、You、Mantra"></h3>
+      <p data-en="Wins collects what you actually did, day by day. You is a passage about who you are, written from that whole record. Mantra holds the lines you keep — and she uses your own words back at you." data-zh="Wins 累積你每天真的做了什麼。You 是從那整份紀錄寫出來的一段「你是怎樣的人」。Mantra 收著你留下的句子 —— 她會用你自己的話回敬你。"></p></div>
   </div>
 </div></section>
 
@@ -197,48 +198,48 @@
       <div class="lane-h" data-en="Per request — you speak" data-zh="每次請求 — 你開口說"></div>
       <button class="node" data-node="browser"><b>Browser · record</b><small>frontend/App.jsx</small></button>
       <span class="v">↓</span>
-      <button class="node" data-node="api"><b>FastAPI · /transcribe</b><small>main.py</small></button>
+      <button class="node" data-node="api"><b>FastAPI · /transcribe</b><small>api/routes/voice.py</small></button>
       <span class="v">↓</span>
-      <button class="node" data-node="whisper"><b>Whisper · speech→text</b><small>voice.py</small></button>
+      <button class="node" data-node="stt"><b>gpt-4o-mini-transcribe</b><small>services/voice.py</small></button>
       <span class="v">↓</span>
 
       <div class="loopbox">
         <div class="looplabel" data-en="Agent loop — repeats until Minerva replies" data-zh="Agent 迴圈 — 重複到Minerva回覆為止"></div>
-        <button class="node hot" data-node="agent"><b>LangChain agent</b><small>agent.py · create_agent</small></button>
+        <button class="node hot" data-node="agent"><b>LangChain agent</b><small>services/agent.py · create_agent</small></button>
         <span class="v">↓ <span data-en="each turn uses" data-zh="每一輪用到"></span></span>
         <div class="row2">
           <div class="branch">
             <div class="toolbox">
-              <button class="node outer" data-node="profileinj"><b>profile injected</b><small>profile.py · layer 3</small></button>
+              <button class="node outer" data-node="profileinj"><b>profile injected</b><small>services/profile.py · layer 3</small></button>
               <div class="connector">↓ <span data-en="prepended to the prompt" data-zh="接到 prompt 前面"></span></div>
               <div class="node ghost inner"><b data-en="who you are" data-zh="你是誰"></b><small data-en="fixed size" data-zh="固定大小"></small></div>
             </div>
           </div>
           <div class="branch">
             <div class="toolbox">
-              <button class="node outer" data-node="recall"><b>search_past_entries</b><small>recall.py · layer 2</small></button>
+              <button class="node outer" data-node="recall"><b>search_past_entries</b><small>services/recall.py · layer 2</small></button>
               <div class="connector">↓ <span data-en="internally queries" data-zh="內部查詢"></span></div>
               <button class="node inner" data-node="pgv"><b>pgvector · top-k</b><small>PGVector + embeddings</small></button>
             </div>
           </div>
         </div>
         <span class="v">↓</span>
-        <button class="node hot" data-node="claude"><b>Claude replies</b><small>ChatAnthropic</small></button>
+        <button class="node hot" data-node="llm"><b>gpt-5.3-chat-latest replies</b><small>services/chat_model.py</small></button>
         <div class="loopback" data-en="↺ tool results go back to the agent" data-zh="↺ 工具結果送回 agent"></div>
       </div>
 
       <span class="v">↓ <span data-en="reply text" data-zh="回覆文字"></span></span>
-      <button class="node" data-node="tts"><b>ElevenLabs · text→speech</b><small>voice.py</small></button>
+      <button class="node" data-node="tts"><b>Google Cloud TTS · text→speech</b><small>services/voice.py</small></button>
       <span class="v">↓</span>
       <button class="node done" data-node="play"><b>Played aloud</b><small>→ browser</small></button>
 
       <div class="lane-h" style="margin-top:26px" data-en="After every exchange — feed the three memory layers" data-zh="每次對話之後 — 餵養三層記憶"></div>
       <div class="row3">
-        <button class="node" data-node="log"><b>1 · Postgres log</b><small>entries.py</small></button>
+        <button class="node" data-node="log"><b>1 · Postgres log</b><small>services/entries.py</small></button>
         <span class="arr">+</span>
-        <button class="node" data-node="embed"><b>2 · embed → pgvector</b><small>recall.py</small></button>
+        <button class="node" data-node="embed"><b>2 · embed → pgvector</b><small>services/recall.py</small></button>
         <span class="arr">+</span>
-        <button class="node" data-node="recondense"><b>3 · re-condense profile</b><small>profile.py</small></button>
+        <button class="node" data-node="recondense"><b>3 · re-condense profile</b><small>services/profile.py</small></button>
       </div>
     </div>
 
@@ -301,21 +302,22 @@
     <div class="chip"><b>FastAPI</b></div>
     <div class="chip">Python 3.12</div>
     <div class="chip"><b>LangChain</b> <span style="color:var(--muted)">agent · RAG · memory</span></div>
-    <div class="chip"><b>Claude</b> <span style="color:var(--muted)">ChatAnthropic</span></div>
-    <div class="chip"><b>Whisper</b> <span style="color:var(--muted)">STT</span></div>
-    <div class="chip"><b>ElevenLabs</b> <span style="color:var(--muted)">TTS</span></div>
+    <div class="chip"><b>OpenAI</b> <span style="color:var(--muted)">gpt-5.3-chat-latest</span></div>
+    <div class="chip"><b>OpenAI</b> <span style="color:var(--muted)">gpt-4o-mini-transcribe · STT</span></div>
+    <div class="chip"><b>Google Cloud TTS</b> <span style="color:var(--muted)">en-GB Chirp3-HD</span></div>
     <div class="chip"><b>Postgres + pgvector</b></div>
     <div class="chip">OpenAI embeddings</div>
     <div class="chip"><b>Firebase Auth</b></div>
     <div class="chip">LangSmith</div>
     <div class="chip">React (Vite)</div>
-    <div class="chip">GitHub Actions</div>
+    <div class="chip">ruff</div>
+    <div class="chip"><b>GitHub Actions</b> <span style="color:var(--muted)">CI + auto-deploy</span></div>
     <div class="chip"><b>Google Cloud</b> <span style="color:var(--muted)">Run · SQL · Secrets</span></div>
   </div>
 </div></section>
 
 <footer><div class="wrap">
-  <span data-en="Minerva · FastAPI + LangChain + Claude · " data-zh="Minerva · FastAPI + LangChain + Claude · "></span>
+  <span data-en="Minerva · FastAPI + LangChain + OpenAI · " data-zh="Minerva · FastAPI + LangChain + OpenAI · "></span>
   <a href="https://github.com/srichsun/Minerva" target="_blank" rel="noopener" style="color:var(--accent)">GitHub</a>
 </div></footer>
 
@@ -330,40 +332,40 @@
     browser:{file:"frontend/src/App.jsx",
       en:["Browser · record","Tap the mic and talk. The browser records the audio and POSTs it to /transcribe; the reply then streams in from /agent/stream with your Firebase sign-in token attached."],
       zh:["瀏覽器 · 錄音","點麥克風開口說。瀏覽器把音檔錄下來，帶著你的 Firebase 登入 token POST 到 /transcribe，回覆再由 /agent/stream 逐字串流回來。"]},
-    api:{file:"app/main.py",
-      en:["FastAPI · /transcribe","The web layer. Verifies your sign-in token, scopes everything to you, and passes the audio on. Protected endpoints require sign-in."],
-      zh:["FastAPI · /transcribe","Web 層。驗證你的登入 token、把所有東西綁到你身上，再把音檔往下傳。受保護的 endpoint 都要登入。"]},
-    whisper:{file:"app/voice.py",
-      en:["Whisper · speech → text","OpenAI Whisper transcribes your recording into text — the words Minerva will actually read."],
-      zh:["Whisper · 語音轉文字","OpenAI Whisper 把你的錄音轉成文字 —— 這才是Minerva真正會讀到的內容。"]},
-    agent:{file:"app/agent.py",
-      en:["LangChain agent","Built with create_agent + Claude. It runs the whole “think, maybe call a tool, repeat” loop for us, and decides on its own when recalling a past moment would help."],
-      zh:["LangChain Minerva agent","用 create_agent + Claude 打造。它幫我們跑完整個「思考、可能呼叫工具、重複」的迴圈，並自己決定什麼時候回想過去會有幫助。"]},
-    profileinj:{file:"app/profile.py",
+    api:{file:"app/api/routes/voice.py",
+      en:["FastAPI · /transcribe","The web layer. Verifies your sign-in token, scopes everything to you, and passes the audio on. Every endpoint except /health requires sign-in."],
+      zh:["FastAPI · /transcribe","Web 層。驗證你的登入 token、把所有東西綁到你身上，再把音檔往下傳。除了 /health 以外都要登入。"]},
+    stt:{file:"app/services/voice.py",
+      en:["gpt-4o-mini-transcribe · speech → text","OpenAI transcribes your recording into text — the words Minerva will actually read. The browser reports its own recording format (Chrome makes webm, iOS Safari makes mp4) rather than the code assuming one."],
+      zh:["gpt-4o-mini-transcribe · 語音轉文字","OpenAI 把你的錄音轉成文字 —— 這才是 Minerva 真正會讀到的內容。錄音格式由瀏覽器自己回報（Chrome 錄 webm、iOS Safari 錄 mp4），不是寫死一種。"]},
+    agent:{file:"app/services/agent.py",
+      en:["LangChain agent","Built with create_agent. It runs the whole “think, maybe call a tool, repeat” loop for us, and decides on its own when recalling a past moment would help. There is no checkpointer: today's conversation is replayed from Postgres each turn, so nothing is lost on restart or when you switch devices."],
+      zh:["LangChain agent","用 create_agent 打造。它幫我們跑完整個「思考、可能呼叫工具、重複」的迴圈，並自己決定什麼時候回想過去會有幫助。這裡沒有 checkpointer：每一輪都直接從 Postgres 重播今天的對話，所以重啟或換裝置都不會掉。"]},
+    profileinj:{file:"app/services/profile.py",
       en:["Profile injected — memory layer 3","Before every reply, your rolling profile (goals, habits, triggers, what helps) is prepended to the prompt. It's LLM-condensed and fixed-size, so Minerva always talks with a fresh sense of who you are — without re-reading your whole history."],
       zh:["注入 profile —— 記憶第 3 層","每次回覆前，把你的滾動 profile（目標、習慣、地雷、什麼有用）接到 prompt 前面。它由 LLM 濃縮、大小固定，所以Minerva總是帶著對你最新的理解說話，卻不用重讀整段歷史。"]},
-    recall:{file:"app/recall.py",
+    recall:{file:"app/services/recall.py",
       en:["search_past_entries — memory layer 2","The one tool Minerva can call. Give it the current topic; it returns the most relevant past entries. This is the “understands you right now” layer — episodic memory, separate from the plain-SQL day/wins queries."],
       zh:["search_past_entries —— 記憶第 2 層","Minerva唯一能呼叫的工具。給它現在的主題，它回傳最相關的過去紀錄。這是「當下懂你」那一層 —— 情節記憶，跟純 SQL 的日/成就查詢分開。"]},
-    pgv:{file:"app/recall.py · PGVector",
+    pgv:{file:"app/services/recall.py · PGVector",
       en:["pgvector · top-k — what the tool does inside","Not a separate step — this runs inside the tool call above. Embeds the query and asks pgvector for the top-k closest past entries. Top-k is fixed, so the recalled slice stays constant no matter how big the journal grows."],
       zh:["pgvector · top-k —— 工具內部在做的事","不是另外一步 —— 這是在上面那次工具呼叫「裡面」跑的。把 query 轉成向量，向 pgvector 要最接近的 top-k 筆過去紀錄。top-k 固定，所以不管日誌變多大，回想的那一片都維持固定大小。"]},
-    claude:{file:"app/agent.py · ChatAnthropic",
-      en:["Claude replies","With your profile and any recalled entries in hand, Claude writes her reply — warm, short, and grounded in your real history instead of guessing."],
-      zh:["Claude 回覆","手上有你的 profile 和回想到的紀錄後，Claude 寫出Minerva的回覆 —— 溫暖、簡短、扎在你真實的歷史上，而不是亂猜。"]},
-    tts:{file:"app/voice.py",
-      en:["ElevenLabs · text → speech","The reply is read aloud in a warm British voice. ElevenLabs is the default; OpenAI TTS is a drop-in fallback behind the same speak() call."],
-      zh:["ElevenLabs · 文字轉語音","回覆用溫暖的英式嗓音唸出來。ElevenLabs 是預設；OpenAI TTS 是同一個 speak() 後面可直接替換的備援。"]},
+    llm:{file:"app/services/chat_model.py",
+      en:["gpt-5.3-chat-latest replies","With your profile, your saved mantras, and any recalled entries in hand, the model writes her reply — warm, and grounded in your real history instead of guessing. Claude is a supported alternative: set LLM_PROVIDER=anthropic."],
+      zh:["gpt-5.3-chat-latest 回覆","手上有你的 profile、你收藏的 mantra 和回想到的紀錄後，模型寫出 Minerva 的回覆 —— 溫暖、扎在你真實的歷史上，而不是亂猜。Claude 是支援的替代選項，設 LLM_PROVIDER=anthropic 即可。"]},
+    tts:{file:"app/services/voice.py",
+      en:["Google Cloud TTS · text → speech","The reply is read aloud in a genuinely British voice (en-GB-Chirp3-HD-Callirrhoe). Synthesis latency grows superlinearly with length, so the frontend splits the reply into ~220-character sentences and plays each while fetching the next — the first sound arrives in about a second. ElevenLabs and OpenAI TTS sit behind the same speak() call."],
+      zh:["Google Cloud TTS · 文字轉語音","回覆用真正的英國腔唸出來（en-GB-Chirp3-HD-Callirrhoe）。合成延遲隨長度超線性成長，所以前端把回覆切成約 220 字元的句子，播一段的同時去抓下一段 —— 第一聲大約 1 秒就出來。ElevenLabs 和 OpenAI TTS 在同一個 speak() 後面。"]},
     play:{file:"frontend/src/App.jsx",
       en:["Played aloud","The browser plays the mp3, so you hear Minerva answer. One exchange, done — and now it becomes memory."],
       zh:["唸出來播放","瀏覽器播放 mp3，你就聽到Minerva的回答。一次對話完成 —— 接著它變成記憶。"]},
-    log:{file:"app/entries.py",
+    log:{file:"app/services/entries.py",
       en:["Memory layer 1 · structured log","Every exchange is saved to Postgres as a journal entry — transcript, reply, plus mood / wins / themes Minerva pulls out. Plain SQL powers “recall this day” and “this month's wins”. No AI needed."],
       zh:["記憶第 1 層 · 結構化日誌","每次對話都存進 Postgres 成一筆日誌 —— 逐字稿、回覆，加上Minerva抽出的心情 / 成就 / 主題。純 SQL 就能做「回顧這天」「這個月的成就」。不用 AI。"]},
-    embed:{file:"app/recall.py",
+    embed:{file:"app/services/recall.py",
       en:["Memory layer 2 · embed","The same entry is embedded and stored in pgvector, keyed by its SQL row id — so re-indexing overwrites, never duplicates. That's what makes it findable by future searches."],
       zh:["記憶第 2 層 · embed","同一筆紀錄被 embed 後存進 pgvector，用它的 SQL row id 當 key —— 所以重新索引是覆蓋，不會重複。這讓它未來被搜尋得到。"]},
-    recondense:{file:"app/profile.py",
+    recondense:{file:"app/services/profile.py",
       en:["Memory layer 3 · re-condense","Every few entries, an LLM folds recent journal into your profile — keeping what's still true, dropping one-off trivia. It's how Minerva steadily gets to know you while the profile stays a fixed size."],
       zh:["記憶第 3 層 · 重新濃縮","每幾筆紀錄，就由 LLM 把最近的日誌摺進你的 profile —— 留下還成立的、丟掉一次性瑣事。這就是Minerva持續認識你、而 profile 又維持固定大小的方法。"]}
   };
@@ -399,8 +401,8 @@
   });
 
   // Trace: light up the boxes along a real request, in order — a full voice turn
-  // (Claude comes after the agent recalls), then the three memory-layer writes.
-  var TRACE = ["browser","api","whisper","agent","profileinj","recall","pgv","agent","claude","tts","play","log","embed","recondense"];
+  // (the model replies after the agent recalls), then the three memory-layer writes.
+  var TRACE = ["browser","api","stt","agent","profileinj","recall","pgv","agent","llm","tts","play","log","embed","recondense"];
   var timers = [];
   document.getElementById("traceBtn").addEventListener("click", function(){
     timers.forEach(clearTimeout); timers = [];
