@@ -43,6 +43,17 @@ function dayLabel(day) {
   });
 }
 
+// File extension for a recording's MIME type. Browsers disagree on what they
+// record: Chrome produces "audio/webm;codecs=opus", iOS Safari "audio/mp4".
+function audioExtension(mimeType) {
+  const type = (mimeType || "").toLowerCase();
+  if (type.includes("mp4") || type.includes("m4a")) return "mp4";
+  if (type.includes("ogg")) return "ogg";
+  if (type.includes("wav")) return "wav";
+  if (type.includes("mpeg")) return "mp3";
+  return "webm";
+}
+
 // Roughly how much text to synthesise at once. Small enough that the first
 // chunk comes back in about a second, large enough not to chop her delivery
 // into breathless fragments.
@@ -405,7 +416,10 @@ export default function App() {
     rec.ondataavailable = (e) => chunksRef.current.push(e.data);
     rec.onstop = () => {
       stream.getTracks().forEach((t) => t.stop()); // release the mic
-      sendAudio(new Blob(chunksRef.current, { type: "audio/webm" }));
+      // Ask the recorder what it actually produced rather than assuming: Chrome
+      // gives webm, iOS Safari gives mp4, and mislabelling it means the
+      // transcriber can't read the file at all.
+      sendAudio(new Blob(chunksRef.current, { type: rec.mimeType || "audio/webm" }));
     };
     recorderRef.current = rec;
     rec.start();
@@ -420,8 +434,11 @@ export default function App() {
     let text;
     try {
       const form = new FormData();
-      form.append("audio", blob, "clip.webm");
+      // The name carries the format — the transcriber reads the extension to
+      // know how to decode the bytes.
+      form.append("audio", blob, `clip.${audioExtension(blob.type)}`);
       const res = await authFetch(`${API}/transcribe`, { method: "POST", body: form });
+      if (!res.ok) throw new Error("transcription failed");
       text = (await res.json()).text;
     } catch {
       setLoading(false);
@@ -431,7 +448,17 @@ export default function App() {
       ]);
       return;
     }
-    setMessages((prev) => [...prev, { role: "user", text: text || "🎤 (voice)" }]);
+    // Silence, or nothing the transcriber could make out: say so rather than
+    // sending an empty message off to her.
+    if (!text || !text.trim()) {
+      setLoading(false);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", text: "I didn't catch that — try again?" },
+      ]);
+      return;
+    }
+    setMessages((prev) => [...prev, { role: "user", text }]);
     await streamReply(text);
   }
 
