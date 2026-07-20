@@ -9,3 +9,7 @@ from app.models.base import Base
 from app.models.entry import Entry
 from app.models.mantra import Mantra
 from app.models.profile import Profile
+
+# Marks these as deliberate re-exports, so the linter doesn't read them as
+# unused imports.
+__all__ = ["Base", "Entry", "Mantra", "Profile"]
