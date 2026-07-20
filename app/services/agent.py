@@ -40,6 +40,9 @@ Match the length to what they gave you. Close with a single grounded thought the
 Your deeper goal: help them see themselves clearly and grow wiser, calmer, and more self-aware over time. They should leave feeling genuinely understood."""
 
 
+# --- building the coach ---
+
+
 def _default_model():
     """The real chat model used in production — ChatGPT or Claude per config."""
     return chat_model.build_chat_model()
@@ -108,6 +111,8 @@ def build_agent(model, tools=None, middleware=None):
 # Built once at startup and reused for every request.
 _agent = build_agent(_default_model())
 
+# --- what the coach sees each turn ---
+
 # A whole day of conversation is replayed on every turn. This cap is only a
 # safety valve for a pathological day — a heavy day of ~40 exchanges is around
 # 46k characters, so normal use never comes close. Past it, the oldest
@@ -162,6 +167,9 @@ def reply_to(message: str, user_id: str | None = None) -> str:
     return result["messages"][-1].content  # the coach's latest reply text
 
 
+# --- what we pull out of an exchange to store alongside it ---
+
+
 class EntryTags(BaseModel):
     """The few things we pull out of an exchange to store alongside the text,
     so later we can list wins or chart mood without re-reading everything."""
@@ -209,17 +217,7 @@ def extract_tags(transcript: str, reply: str) -> EntryTags:
     return _extractor.invoke(prompt)
 
 
-def reply_and_save(message: str, user_id: str | None = None) -> dict:
-    """Reply as the coach, then save the exchange as a journal entry.
-
-    Every turn is saved on purpose — that's the whole point (unlike ChatGPT,
-    nothing is forgotten). Everything is scoped to user_id so accounts stay
-    separate. If tag extraction fails, we still save the raw exchange with
-    empty tags rather than lose it.
-    """
-    reply = reply_to(message, user_id)
-    _save_exchange(message, reply, user_id)
-    return {"answer": reply}
+# --- what the API calls ---
 
 
 def _save_exchange(message: str, reply: str, user_id: str | None) -> None:
@@ -249,6 +247,19 @@ def _save_exchange(message: str, reply: str, user_id: str | None) -> None:
         strengths.maybe_refresh(user_id)
     except Exception:
         pass
+
+
+def reply_and_save(message: str, user_id: str | None = None) -> dict:
+    """Reply as the coach, then save the exchange as a journal entry.
+
+    Every turn is saved on purpose — that's the whole point (unlike ChatGPT,
+    nothing is forgotten). Everything is scoped to user_id so accounts stay
+    separate. If tag extraction fails, we still save the raw exchange with
+    empty tags rather than lose it.
+    """
+    reply = reply_to(message, user_id)
+    _save_exchange(message, reply, user_id)
+    return {"answer": reply}
 
 
 def stream_and_save(message: str, user_id: str | None = None):
