@@ -43,6 +43,32 @@ function dayLabel(day) {
   });
 }
 
+// Roughly how much text to synthesise at once. Small enough that the first
+// chunk comes back in about a second, large enough not to chop her delivery
+// into breathless fragments.
+const SPEECH_CHUNK_CHARS = 220;
+
+// Split a reply into speakable chunks, breaking on sentence ends so each one
+// sounds like a finished thought rather than a cut-off line.
+function splitForSpeech(text) {
+  const plain = (text || "")
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/[*_`#>]/g, "")
+    .replace(/\n{2,}/g, "\n");
+  const sentences = plain.match(/[^.!?\n]+[.!?]*\n?/g) || [];
+  const chunks = [];
+  let current = "";
+  for (const s of sentences) {
+    if (current && (current + s).length > SPEECH_CHUNK_CHARS) {
+      chunks.push(current.trim());
+      current = "";
+    }
+    current += s;
+  }
+  if (current.trim()) chunks.push(current.trim());
+  return chunks.filter(Boolean);
+}
+
 // Line icons for the play control. Drawn rather than emoji so they inherit the
 // text colour and match the hairline weight the rest of the page uses.
 function PlayIcon() {
@@ -141,6 +167,8 @@ export default function App() {
   // Which reply is currently claimed for playback. A ref rather than state
   // because taps arrive faster than React re-renders.
   const activeRef = useRef(null);
+  // Resolves the chunk currently playing, so stopping can release the queue.
+  const endPlaybackRef = useRef(null);
 
   // Auto-scroll to the newest message whenever the list changes.
   const bottom = useRef(null);
@@ -199,10 +227,15 @@ export default function App() {
 
   // Read one reply aloud — called from a tap on its speaker button.
   //
-  // The "which reply is active" flag lives in a ref, not state, and that is the
-  // whole point: two quick taps land in the same render, so a state check would
-  // still read null on the second one and fire a second request. Both would
-  // then play, on top of each other. A ref updates the instant we set it.
+  // Synthesis cost is wildly superlinear: one sentence comes back in ~0.6s, a
+  // whole reply takes ~11s. So we ask for it a chunk at a time and start
+  // playing the first while the next is still being made. Speaking a chunk
+  // takes about ten times longer than making one, so after the first there is
+  // always another ready and the seams stay inaudible.
+  //
+  // "Which reply is active" lives in a ref, not state: two quick taps land in
+  // the same render, so a state check would still read null on the second and
+  // start a rival playback on top of the first.
   async function playReply(text, idx) {
     const a = audioRef.current || (audioRef.current = new Audio());
 
@@ -223,49 +256,78 @@ export default function App() {
       /* ignore */
     }
 
-    // Already fetched once this session: replay instantly, and don't pay for
-    // the same audio twice.
-    const cached = audioCache.current.get(text);
-    if (cached) {
-      startPlaying(a, cached, idx);
+    const chunks = splitForSpeech(text);
+    if (!chunks.length) {
+      stopSpeech();
       return;
     }
 
-    setLoadingIdx(idx);
     const controller = new AbortController();
     abortRef.current = controller;
+    setLoadingIdx(idx);
+
+    let pending = prefetchSpeech(chunks[0], controller.signal);
     try {
-      const res = await authFetch(`${API}/speak`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-        signal: controller.signal,
-      });
-      if (!res.ok) throw new Error("speech failed");
-      const url = URL.createObjectURL(await res.blob());
-      audioCache.current.set(text, url);
-      // Stopped, or another reply claimed playback, while we were waiting.
-      if (activeRef.current !== idx) return;
-      setLoadingIdx(null);
-      startPlaying(a, url, idx);
+      for (let i = 0; i < chunks.length; i++) {
+        const url = await pending;
+        if (activeRef.current !== idx) return; // stopped while we waited
+        // Start making the next chunk before playing this one.
+        pending =
+          i + 1 < chunks.length
+            ? prefetchSpeech(chunks[i + 1], controller.signal)
+            : null;
+        if (i === 0) {
+          setLoadingIdx(null);
+          setSpeakingIdx(idx);
+        }
+        await playOne(a, url);
+        if (activeRef.current !== idx) return;
+      }
     } catch {
-      if (activeRef.current === idx) stopSpeech(); // aborted, or it failed
+      /* aborted by another tap, or speech failed — the text is still there */
     }
+    if (activeRef.current === idx) stopSpeech();
   }
 
-  function startPlaying(a, url, idx) {
-    a.pause();
-    a.src = url;
-    a.onended = () => {
-      if (activeRef.current === idx) stopSpeech();
-    };
-    setLoadingIdx(null);
-    setSpeakingIdx(idx);
-    a.play().catch(() => stopSpeech());
+  // Fetch one chunk's audio, reusing anything already fetched this session so
+  // replaying costs neither time nor money.
+  async function fetchSpeech(chunk, signal) {
+    const cached = audioCache.current.get(chunk);
+    if (cached) return cached;
+    const res = await authFetch(`${API}/speak`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: chunk }),
+      signal,
+    });
+    if (!res.ok) throw new Error("speech failed");
+    const url = URL.createObjectURL(await res.blob());
+    audioCache.current.set(chunk, url);
+    return url;
   }
 
-  // One place that undoes everything, so no path can leave a request running
-  // or a flag set.
+  // Same, but tolerates being abandoned: a prefetch nobody ends up awaiting
+  // would otherwise surface as an unhandled rejection.
+  function prefetchSpeech(chunk, signal) {
+    const p = fetchSpeech(chunk, signal);
+    p.catch(() => {});
+    return p;
+  }
+
+  // Play one chunk; resolves when it ends, fails, or playback is stopped, so
+  // the queue above can never hang waiting on audio that will never finish.
+  function playOne(a, url) {
+    return new Promise((resolve) => {
+      endPlaybackRef.current = resolve;
+      a.onended = resolve;
+      a.onerror = resolve;
+      a.src = url;
+      a.play().catch(resolve);
+    });
+  }
+
+  // One place that undoes everything, so no path can leave a request running,
+  // a flag set, or the queue awaiting a chunk that stopped.
   function stopSpeech() {
     activeRef.current = null;
     abortRef.current?.abort();
@@ -273,8 +335,11 @@ export default function App() {
     const a = audioRef.current;
     if (a) {
       a.onended = null;
+      a.onerror = null;
       a.pause();
     }
+    endPlaybackRef.current?.();
+    endPlaybackRef.current = null;
     setSpeakingIdx(null);
     setLoadingIdx(null);
   }
