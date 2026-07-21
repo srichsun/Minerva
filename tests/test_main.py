@@ -8,8 +8,9 @@ from datetime import datetime, timezone
 
 from fastapi.testclient import TestClient
 
+from app.core import clock
 from app.core import security as auth
-from app.services import entries, voice
+from app.services import agent, entries, voice
 from app.main import app
 
 client = TestClient(app)
@@ -34,6 +35,30 @@ def test_protected_routes_require_auth():
         assert client.post("/speak", json={"text": "hi"}).status_code == 401
     finally:
         app.dependency_overrides[auth.current_user_uid] = lambda: TEST_UID
+
+
+def test_a_blank_turn_is_rejected_before_it_costs_anything(sqlite_db):
+    """A silent recording or a stray Enter must not reach the model, and must
+    not leave an empty journal entry that no recall could ever use."""
+    for blank in ("", "   ", "\n\t"):
+        resp = client.post("/agent", json={"question": blank})
+        assert resp.status_code == 422, blank
+        assert client.post("/agent/stream", json={"question": blank}).status_code == 422
+
+    # Nothing was written.
+    assert entries.entries_on(clock.today(), user_id=TEST_UID) == []
+
+
+def test_surrounding_whitespace_is_stripped_from_what_is_stored(sqlite_db, monkeypatch):
+    """What gets journalled is what was said, not the padding around it."""
+    monkeypatch.setattr(agent, "_reply_to", lambda msg, user_id: f"heard: {msg}")
+    monkeypatch.setattr(agent, "_save_exchange", lambda m, r, user_id: saved.update(m=m))
+    saved = {}
+
+    resp = client.post("/agent", json={"question": "  I ran 5k today  "})
+
+    assert resp.status_code == 200
+    assert saved["m"] == "I ran 5k today"
 
 
 def test_entries_endpoint_returns_todays_entries(sqlite_db):
