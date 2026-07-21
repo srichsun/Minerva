@@ -121,7 +121,7 @@ app/
   main.py            FastAPI 進入點：掛載 router、建表、提供打包好的前端
   api/
     router.py        把每個路由模組收在一起
-    deps.py          CurrentUser —— 標上它的路由就需要登入
+    deps.py          CurrentUid —— 標上它的路由就需要登入
     routes/          health · coach · voice · journal · profile · mantras
   services/
     agent.py         LangChain agent（create_agent + 工具 + prompt 注入）

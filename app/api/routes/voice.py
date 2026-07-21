@@ -2,7 +2,7 @@
 from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import Response
 
-from app.api.deps import CurrentUser
+from app.api.deps import CurrentUid
 from app.core import config
 from app.schemas.coach import SpeakRequest
 from app.services import voice
@@ -11,7 +11,7 @@ router = APIRouter(tags=["voice"])
 
 
 @router.post("/transcribe")
-async def transcribe(uid: CurrentUser, audio: UploadFile = File(...)):
+async def transcribe(uid: CurrentUid, audio: UploadFile = File(...)):
     """Turn recorded audio into text. The browser then streams the reply via
     /agent/stream, so voice replies type out live like typed ones."""
     data = await audio.read()
@@ -19,7 +19,7 @@ async def transcribe(uid: CurrentUser, audio: UploadFile = File(...)):
 
 
 @router.post("/speak")
-def speak(req: SpeakRequest, uid: CurrentUser):
+def speak(req: SpeakRequest, uid: CurrentUid):
     """Turn text into spoken audio (mp3) so the browser can play it.
 
     Requires sign-in — TTS costs real money per character, so this must not be

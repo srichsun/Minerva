@@ -1,7 +1,7 @@
 """The lines this person keeps for their hardest days."""
 from fastapi import APIRouter, HTTPException
 
-from app.api.deps import CurrentUser
+from app.api.deps import CurrentUid
 from app.models import Mantra
 from app.schemas.mantra import MantraRequest
 from app.services import mantras
@@ -14,13 +14,13 @@ def _dict(m: Mantra) -> dict:
 
 
 @router.get("")
-def list_mantras(uid: CurrentUser):
+def list_mantras(uid: CurrentUid):
     """Everything this person has kept, newest first."""
     return {"mantras": [_dict(m) for m in mantras.list_mantras(uid)]}
 
 
 @router.post("")
-def add_mantra(req: MantraRequest, uid: CurrentUser):
+def add_mantra(req: MantraRequest, uid: CurrentUid):
     """Keep a new line."""
     mantra = mantras.add_mantra(uid, req.text)
     if mantra is None:
@@ -29,7 +29,7 @@ def add_mantra(req: MantraRequest, uid: CurrentUser):
 
 
 @router.patch("/{mantra_id}")
-def update_mantra(mantra_id: int, req: MantraRequest, uid: CurrentUser):
+def update_mantra(mantra_id: int, req: MantraRequest, uid: CurrentUid):
     """Reword one. 404 if it isn't theirs — the same answer as not existing,
     so this can't be used to discover other people's ids."""
     mantra = mantras.update_mantra(uid, mantra_id, req.text)
@@ -39,7 +39,7 @@ def update_mantra(mantra_id: int, req: MantraRequest, uid: CurrentUser):
 
 
 @router.delete("/{mantra_id}")
-def delete_mantra(mantra_id: int, uid: CurrentUser):
+def delete_mantra(mantra_id: int, uid: CurrentUid):
     """Let one go."""
     if not mantras.delete_mantra(uid, mantra_id):
         raise HTTPException(status_code=404, detail="No such mantra")

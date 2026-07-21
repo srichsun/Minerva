@@ -16,7 +16,7 @@ client = TestClient(app)
 
 TEST_UID = "u-test"
 # Pretend the request is signed in as TEST_UID for all tests by default.
-app.dependency_overrides[auth.current_user] = lambda: TEST_UID
+app.dependency_overrides[auth.current_user_uid] = lambda: TEST_UID
 
 
 def test_health():
@@ -27,13 +27,13 @@ def test_health():
 
 def test_protected_routes_require_auth():
     # Drop the override so the real gate runs; no token -> 401.
-    app.dependency_overrides.pop(auth.current_user, None)
+    app.dependency_overrides.pop(auth.current_user_uid, None)
     try:
         assert client.post("/agent", json={"question": "hi"}).status_code == 401
         # /speak costs money per character — it must be locked down too.
         assert client.post("/speak", json={"text": "hi"}).status_code == 401
     finally:
-        app.dependency_overrides[auth.current_user] = lambda: TEST_UID
+        app.dependency_overrides[auth.current_user_uid] = lambda: TEST_UID
 
 
 def test_entries_endpoint_returns_todays_entries(sqlite_db):

@@ -138,7 +138,7 @@ app/
   main.py            FastAPI app: mounts the router, creates tables, serves the built frontend
   api/
     router.py        collects every route module
-    deps.py          CurrentUser — annotate a route with it to require sign-in
+    deps.py          CurrentUid — annotate a route with it to require sign-in
     routes/          health · coach · voice · journal · profile · mantras
   services/
     agent.py         LangChain agent (create_agent + tool + prompt injection)

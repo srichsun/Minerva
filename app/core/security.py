@@ -31,7 +31,7 @@ def verify_token(id_token: str) -> str:
     return decoded["uid"]
 
 
-def current_user(authorization: str | None = Header(None)) -> str:
+def current_user_uid(authorization: str | None = Header(None)) -> str:
     """FastAPI dependency: require a valid Bearer token, return the uid."""
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing bearer token")
