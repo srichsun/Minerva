@@ -7,48 +7,21 @@ Each fact is then embedded on its own, so recall over "health" matches only the
 health fact, not a whole turn where health was one thread among many.
 """
 from datetime import datetime
-from typing import Literal
 
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
 from app.core import db
-from app.models import Fact
+from app.models import Category, Fact
 from app.services import chat_model, recall
-
-# The eight "who this person is" categories, plus `wins` — what they actually
-# did that counts. Wins earn their own category because "remind me what I've
-# done" is a different question from "what am I like", and she needs to be able
-# to search for it directly on the days someone has forgotten. Fixed on purpose:
-# a bounded set keeps recall filters and the coach's category choices
-# predictable. Order is the order the model sees them.
-CATEGORIES = (
-    "about me",
-    "preferences",
-    "people",
-    "work & career",
-    "goals & aspirations",
-    "health & habits",
-    "beliefs",
-    "patterns",
-    "wins",
-)
 
 
 class _Fact(BaseModel):
     """One single-topic statement about the person, filed under one category."""
 
-    category: Literal[
-        "about me",
-        "preferences",
-        "people",
-        "work & career",
-        "goals & aspirations",
-        "health & habits",
-        "beliefs",
-        "patterns",
-        "wins",
-    ] = Field(description="which category this fact belongs to")
+    category: Category = Field(
+        description="which category this fact belongs to"
+    )
     text: str = Field(description="the single-topic statement, in plain words")
 
 

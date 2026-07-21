@@ -7,10 +7,10 @@ without caring which file it lives in.
 """
 from app.models.base import Base
 from app.models.entry import Entry
-from app.models.fact import Fact
+from app.models.fact import CATEGORIES, Category, Fact
 from app.models.mantra import Mantra
 from app.models.profile import Profile
 
 # Marks these as deliberate re-exports, so the linter doesn't read them as
 # unused imports.
-__all__ = ["Base", "Entry", "Fact", "Mantra", "Profile"]
+__all__ = ["Base", "CATEGORIES", "Category", "Entry", "Fact", "Mantra", "Profile"]

@@ -3,19 +3,46 @@
 A single thing the person said gets broken into several single-topic facts, so
 each can be embedded and searched on its own — searching "health" then matches
 only the health fact, not a whole three-minute turn where health was one thread
-among work and relationships. Every fact carries a `category` (one of the fixed
-set in app.services.facts.CATEGORIES) so recall can pull back just the relevant
-kinds, and the coach can say which kinds it wants.
+among work and relationships. Every fact carries a `category` from the fixed set
+below, so recall can pull back just the relevant kinds and the coach can say
+which kinds it wants.
+
+The vocabulary lives here, next to the column it describes, so extraction and
+recall bind to the same list rather than each spelling it out. A name that only
+matched in one of the two would fail silently — the filter would simply match
+nothing and the memory would look empty.
 
 `entry_id` and `created_at` are kept so a later pass can merge a day's facts or
 count how often a pattern recurs; today nothing reads them beyond scoping.
 """
 from datetime import datetime
+from typing import Literal
 
 from sqlalchemy import DateTime, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, now
+
+# The eight "who this person is" categories, plus `wins` — what they actually
+# did that counts. Wins earn their own category because "remind me what I've
+# done" is a different question from "what am I like", and she needs to search
+# it directly on the days someone has forgotten. Order is the order the model
+# sees them.
+CATEGORIES = (
+    "about me",
+    "preferences",
+    "people",
+    "work & career",
+    "goals & aspirations",
+    "health & habits",
+    "beliefs",
+    "patterns",
+    "wins",
+)
+
+# The same list as a type, so both the extractor's schema and the recall tool's
+# arguments are constrained to it — the model cannot invent a category name.
+Category = Literal[*CATEGORIES]
 
 
 class Fact(Base):
