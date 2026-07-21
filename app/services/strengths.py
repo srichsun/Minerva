@@ -50,7 +50,7 @@ _CONDENSE_PROMPT = (
 )
 
 
-def get_strengths(user_id: str | None) -> str:
+def get_strengths(user_id: str) -> str:
     """This person's passage, or "" if one hasn't been written yet."""
     if not user_id:
         return ""
@@ -64,12 +64,12 @@ def get_strengths(user_id: str | None) -> str:
     return "" if content.lstrip().startswith("[") else content
 
 
-def as_prompt_text(user_id: str | None) -> str:
+def as_prompt_text(user_id: str) -> str:
     """The passage, for injecting into her prompt when they're struggling."""
     return get_strengths(user_id)
 
 
-def refresh_strengths(user_id: str | None) -> str:
+def refresh_strengths(user_id: str) -> str:
     """Rewrite this person's passage from their journal and save it."""
     if not user_id:
         return ""
@@ -95,7 +95,7 @@ def refresh_strengths(user_id: str | None) -> str:
     return passage
 
 
-def maybe_refresh(user_id: str | None) -> None:
+def maybe_refresh(user_id: str) -> None:
     """Rewrite only once enough new entries have accumulated."""
     if not user_id:
         return

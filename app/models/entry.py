@@ -19,9 +19,9 @@ class Entry(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=now, index=True
     )
-    # Firebase uid of the person this entry belongs to. Nullable so pre-auth
-    # rows still load; new rows always carry it.
-    user_id: Mapped[str | None] = mapped_column(String(128), index=True, nullable=True)
+    # Firebase uid of the person this entry belongs to. Required: an entry with
+    # no owner could never be read back, since every query scopes by uid.
+    user_id: Mapped[str] = mapped_column(String(128), index=True, nullable=False)
     transcript: Mapped[str] = mapped_column(Text)  # what the user said
     ai_reply: Mapped[str] = mapped_column(Text)  # what the coach replied
     # The coach fills these in; all optional. wins/themes are kept as plain

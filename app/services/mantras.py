@@ -13,7 +13,7 @@ from app.core import db
 from app.models import Mantra
 
 
-def list_mantras(user_id: str | None) -> list[Mantra]:
+def list_mantras(user_id: str) -> list[Mantra]:
     """One person's mantras, newest first."""
     if not user_id:
         return []
@@ -67,7 +67,7 @@ def delete_mantra(user_id: str, mantra_id: int) -> bool:
         return True
 
 
-def as_prompt_text(user_id: str | None) -> str:
+def as_prompt_text(user_id: str) -> str:
     """The mantras as plain lines, for injecting into her prompt."""
     rows = list_mantras(user_id)
     return "\n".join(f"- {m.text}" for m in rows)

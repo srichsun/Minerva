@@ -115,7 +115,7 @@ _agent = build_agent(chat_model.build_chat_model())
 MAX_HISTORY_CHARS = 120_000
 
 
-def _todays_conversation(user_id: str | None) -> list[dict]:
+def _todays_conversation(user_id: str) -> list[dict]:
     """Today's conversation so far, as chat messages, oldest first.
 
     Reading it back from the journal — instead of holding it in memory — is
@@ -141,12 +141,12 @@ def _todays_conversation(user_id: str | None) -> list[dict]:
     return messages
 
 
-def _conversation_so_far(message: str, user_id: str | None) -> list[dict]:
+def _conversation_so_far(message: str, user_id: str) -> list[dict]:
     """Today's conversation plus the message just spoken."""
     return _todays_conversation(user_id) + [{"role": "user", "content": message}]
 
 
-def _reply_to(message: str, user_id: str | None = None) -> str:
+def _reply_to(message: str, user_id: str) -> str:
     """Send one message to the coach and get its reply back as text.
 
     The coach sees everything said today, so there is nothing else to pass in.
@@ -214,7 +214,7 @@ def extract_tags(transcript: str, reply: str) -> EntryTags:
 # --- what the API calls ---
 
 
-def _save_exchange(message: str, reply: str, user_id: str | None) -> None:
+def _save_exchange(message: str, reply: str, user_id: str) -> None:
     """Save one exchange as a journal entry, then embed it and (occasionally)
     refresh the profile. Failures in the extras never lose the saved entry."""
     try:
@@ -243,7 +243,7 @@ def _save_exchange(message: str, reply: str, user_id: str | None) -> None:
         pass
 
 
-def reply_and_save(message: str, user_id: str | None = None) -> dict:
+def reply_and_save(message: str, user_id: str) -> dict:
     """Reply as the coach, then save the exchange as a journal entry.
 
     Every turn is saved on purpose — that's the whole point (unlike ChatGPT,
@@ -256,7 +256,7 @@ def reply_and_save(message: str, user_id: str | None = None) -> dict:
     return {"answer": reply}
 
 
-def stream_and_save(message: str, user_id: str | None = None):
+def stream_and_save(message: str, user_id: str):
     """Stream the coach's reply token by token (for a typewriter effect), then
     save the exchange once it's complete. Yields plain text chunks."""
     parts = []

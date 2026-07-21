@@ -45,7 +45,7 @@ def _store() -> PGVector:
     )
 
 
-def index_entry(entry_id: int, text: str, user_id: str | None = None) -> None:
+def index_entry(entry_id: int, text: str, user_id: str) -> None:
     """Embed one journal entry's text into pgvector, keyed by its row id.
 
     Using the SQL row id as the vector id keeps the two stores in sync and
@@ -59,7 +59,7 @@ def index_entry(entry_id: int, text: str, user_id: str | None = None) -> None:
     )
 
 
-def recall(query: str, user_id: str | None = None, k: int = TOP_K) -> list[str]:
+def recall(query: str, user_id: str, k: int = TOP_K) -> list[str]:
     """Return up to k of one person's past entry snippets most relevant to the query."""
     docs = _store().similarity_search(
         query, k=k, filter={"user_id": user_id}

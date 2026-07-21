@@ -44,7 +44,7 @@ _CONDENSE_PROMPT = (
 )
 
 
-def get_profile(user_id: str | None) -> str:
+def get_profile(user_id: str) -> str:
     """One person's current profile text, or "" if none has formed yet.
 
     The profile row is keyed by the person's Firebase uid. No uid (e.g. an
@@ -65,7 +65,7 @@ def condense(existing: str, recent_text: str) -> str:
     return chat_model.build_chat_model().invoke(prompt).content.strip()
 
 
-def refresh_profile(user_id: str | None) -> str:
+def refresh_profile(user_id: str) -> str:
     """Re-condense one person's profile from their latest entries and save it.
 
     Returns the updated profile text.
@@ -85,7 +85,7 @@ def refresh_profile(user_id: str | None) -> str:
     return updated
 
 
-def maybe_refresh(user_id: str | None) -> None:
+def maybe_refresh(user_id: str) -> None:
     """Refresh one person's profile only when enough new entries have piled up.
 
     Called after saving each entry. Cheap no-op most turns; runs the condense

@@ -16,7 +16,7 @@ from app.models import Entry
 def save_entry(
     transcript: str,
     ai_reply: str,
-    user_id: str | None = None,
+    user_id: str,
     mood: str | None = None,
     wins: str | None = None,
     themes: str | None = None,
@@ -38,7 +38,7 @@ def save_entry(
         return entry.id
 
 
-def entries_on(day: date, user_id: str | None = None) -> list[Entry]:
+def entries_on(day: date, user_id: str) -> list[Entry]:
     """One person's entries from a given journal day, oldest first."""
     start, end = clock.day_bounds(day)
     with db.get_session() as s:
@@ -54,7 +54,7 @@ def entries_on(day: date, user_id: str | None = None) -> list[Entry]:
         return list(s.scalars(stmt))
 
 
-def recent_entries(user_id: str | None = None, limit: int = 30) -> list[Entry]:
+def recent_entries(user_id: str, limit: int = 30) -> list[Entry]:
     """One person's most recent entries, newest first — raw material for the profile."""
     with db.get_session() as s:
         stmt = (
@@ -66,14 +66,14 @@ def recent_entries(user_id: str | None = None, limit: int = 30) -> list[Entry]:
         return list(s.scalars(stmt))
 
 
-def count_entries(user_id: str | None = None) -> int:
+def count_entries(user_id: str) -> int:
     """How many entries one person has."""
     with db.get_session() as s:
         stmt = select(func.count()).select_from(Entry).where(Entry.user_id == user_id)
         return s.scalar(stmt) or 0
 
 
-def recent_wins(user_id: str | None = None, limit: int = 20) -> list[Entry]:
+def recent_wins(user_id: str, limit: int = 20) -> list[Entry]:
     """One person's most recent entries that recorded a win, newest first."""
     with db.get_session() as s:
         stmt = (
