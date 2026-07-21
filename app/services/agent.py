@@ -10,8 +10,11 @@ follows the person from laptop to phone.
 The coach has one tool, search_past_entries, which lets it recall relevant
 past journal entries mid-conversation (semantic memory over pgvector).
 """
+from collections.abc import Iterator
+
 from langchain.agents import create_agent
 from langchain.agents.middleware import dynamic_prompt
+from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessageChunk
 from pydantic import BaseModel, Field
 
@@ -81,8 +84,12 @@ def _prompt_with_profile(request) -> str:
     return prompt
 
 
-def _build_agent(model, tools=None, middleware=None):
+def _build_agent(model: BaseChatModel, tools=None, middleware=None):
     """Wrap a chat model into a coach agent with memory.
+
+    Returns a LangChain agent — call .invoke({"messages": [...]}, context=uid)
+    for a whole reply, or .stream(...) for it token by token. Its concrete type
+    is a CompiledStateGraph generic, too noisy to be worth annotating.
 
     Split out so tests can pass a fake, offline model instead of a real one.
     Tests pass tools=[] (the fake model can't bind tools) and middleware=[]
@@ -246,6 +253,8 @@ def _save_exchange(message: str, reply: str, user_id: str) -> None:
 def reply_and_save(message: str, user_id: str) -> dict:
     """Reply as the coach, then save the exchange as a journal entry.
 
+    Returns {"answer": <the reply>} — the shape of the TalkResponse schema.
+
     Every turn is saved on purpose — that's the whole point (unlike ChatGPT,
     nothing is forgotten). Everything is scoped to user_id so accounts stay
     separate. If tag extraction fails, we still save the raw exchange with
@@ -256,7 +265,7 @@ def reply_and_save(message: str, user_id: str) -> dict:
     return {"answer": reply}
 
 
-def stream_and_save(message: str, user_id: str):
+def stream_and_save(message: str, user_id: str) -> Iterator[str]:
     """Stream the coach's reply token by token (for a typewriter effect), then
     save the exchange once it's complete. Yields plain text chunks."""
     parts = []

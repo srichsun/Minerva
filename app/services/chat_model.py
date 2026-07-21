@@ -6,12 +6,13 @@ Kept in its own module so both the agent and the profile condenser share one
 factory without importing each other.
 """
 from langchain_anthropic import ChatAnthropic
+from langchain_core.language_models import BaseChatModel
 from langchain_openai import ChatOpenAI
 
 from app.core import config
 
 
-def build_chat_model():
+def build_chat_model() -> BaseChatModel:
     """Build the configured chat model (needs the matching API key)."""
     if config.LLM_PROVIDER == "openai":
         return ChatOpenAI(

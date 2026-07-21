@@ -39,7 +39,8 @@ def add_mantra(user_id: str, text: str) -> Mantra | None:
 
 
 def update_mantra(user_id: str, mantra_id: int, text: str) -> Mantra | None:
-    """Reword one of this person's lines. None if it isn't theirs."""
+    """Reword one of this person's lines. None if the new text is blank, or if
+    the line isn't theirs."""
     text = (text or "").strip()
     if not text:
         return None
