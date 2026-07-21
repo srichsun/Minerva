@@ -2,8 +2,8 @@
 
 Every query is scoped to one person (their Firebase uid), so accounts never
 see each other's journal. Recalling a day is just a filtered query by date; no
-AI needed. (Atomic facts and the wins list live in facts.py; semantic "find
-similar past moments" lives in recall.py with pgvector.)
+AI needed. (Atomic facts live in facts.py; semantic "find similar past
+moments" lives in recall.py with pgvector.)
 """
 from datetime import date
 
@@ -21,8 +21,8 @@ def save_entry(
 ) -> int:
     """Store one conversation turn as a journal entry; return its new id.
 
-    The things pulled out of an exchange (wins and the like) are no longer
-    stored on the entry — they live as atomic facts (see app.services.facts).
+    What an exchange is *about* is no longer stored on the entry — it lives as
+    atomic facts (see app.services.facts).
     """
     with db.get_session() as s:
         entry = Entry(

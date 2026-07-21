@@ -42,13 +42,13 @@ def test_index_fact_adds_text_keyed_by_row_id(monkeypatch):
 
     recall.index_fact(
         42, "still went for a run while exhausted", user_id="u9",
-        category="wins",
+        category="health & habits",
     )
 
     assert store.added == [
         (
             ["still went for a run while exhausted"],
-            [{"fact_id": 42, "user_id": "u9", "category": "wins"}],
+            [{"fact_id": 42, "user_id": "u9", "category": "health & habits"}],
             ["42"],
         )
     ]

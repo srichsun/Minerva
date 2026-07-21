@@ -4,7 +4,7 @@ Each fact pulled from an exchange (see app.services.facts) is embedded on its
 own and stored in a pgvector collection alongside its category. During a
 conversation the coach can call search_past_entries to pull back the facts most
 related to what the person is talking about now — the "understands you right
-now" layer (semantic memory), separate from the plain-SQL day/wins queries.
+now" layer (semantic memory), separate from the plain-SQL day queries.
 
 Storing one vector per single-topic fact — rather than one per whole turn — is
 the point: a search for "health" matches only the health fact, instead of being

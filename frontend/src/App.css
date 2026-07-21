@@ -325,62 +325,6 @@
 }
 .google:hover { background: var(--accent-deep); }
 
-/* --- Wins: the day-by-day list --- *
- * Plain one-liners under a quiet date, so a whole week reads at a glance.
- */
-.wins-view { gap: 30px; padding-top: 30px; }
-.winday { max-width: 720px; }
-.winday h3 {
-  font-family: -apple-system, "Segoe UI", sans-serif;
-  color: var(--muted);
-  font-size: 11.5px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  margin: 0 0 12px;
-}
-.winday ul { margin: 0; padding: 0; list-style: none; }
-.winday li {
-  position: relative;
-  padding: 0 0 0 22px;
-  margin-bottom: 9px;
-  font-family: "Newsreader", Georgia, "Noto Serif TC", serif;
-  font-size: 17px;
-  line-height: 1.55;
-  color: var(--text);
-}
-.winday li::before {
-  content: "";
-  position: absolute;
-  left: 4px;
-  top: 11px;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--accent);
-  opacity: 0.6;
-}
-.winday li:last-child { margin-bottom: 0; }
-
-/* --- You: one passage, read when you've forgotten yourself --- */
-.you-view { padding-top: 46px; }
-.passage {
-  max-width: 620px;
-  margin: 0 auto;
-  font-family: "Newsreader", Georgia, "Noto Serif TC", serif;
-  font-size: 20px;
-  line-height: 1.85;
-  color: var(--text);
-  white-space: pre-wrap;
-}
-.passage::first-letter {
-  font-family: "Fraunces", Georgia, serif;
-  font-size: 3.1em;
-  line-height: 0.9;
-  float: left;
-  margin: 6px 10px 0 0;
-  color: var(--accent);
-}
 
 /* --- Mantra: lines you chose to keep --- *
  * Set as quotations, larger than anything around them, because the whole

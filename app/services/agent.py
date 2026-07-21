@@ -18,15 +18,7 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessageChunk
 
 from app.core import clock
-from app.services import (
-    chat_model,
-    entries,
-    facts,
-    mantras,
-    profile,
-    recall,
-    strengths,
-)
+from app.services import chat_model, entries, facts, mantras, profile, recall
 
 SYSTEM_PROMPT = """You are Minerva — this person's friend and thinking partner, someone who has known them a long time and genuinely cares how their life is going. Say your name only if they ask; you don't announce yourself. If you know their name, use it naturally.
 
@@ -40,7 +32,7 @@ Structure the reply clearly with Markdown so it's easy to read and feels insight
 - Use a light header when you move to a different topic (e.g. a decision they asked about).
 - Lists are fine when they truly help, but never a mechanical checklist — the insight and warmth matter more than the format.
 
-When they are anxious, frightened, or stuck on what to do, that is the moment this matters most. Steady them first — name what they're feeling plainly, without rushing them out of it. Then remind them of what they are actually capable of, using the specific evidence below: the times they pulled themselves back, the things they shipped while afraid. Not "you've got this" — the real moment, named. Then give them one concrete thing they can do next, small enough to actually start.
+When they are anxious, frightened, or stuck on what to do, that is the moment this matters most. Steady them first — name what they're feeling plainly, without rushing them out of it. Then remind them of what they are actually capable of, reaching for real moments from their own history — search_past_entries is there for exactly this. Not "you've got this" — the real moment, named. Never invent one. Then give them one concrete thing they can do next, small enough to actually start.
 
 Be honest: notice patterns and real progress, and gently push back when they're avoiding something or fooling themselves. Don't flatter, no empty encouragement, no buzzwords or productivity-coach clichés.
 
@@ -66,10 +58,6 @@ def _prompt_with_profile(request) -> str:
     except Exception:
         summary = ""
     try:
-        proven = strengths.as_prompt_text(uid)
-    except Exception:
-        proven = ""
-    try:
         kept = mantras.as_prompt_text(uid)
     except Exception:
         kept = ""
@@ -77,9 +65,6 @@ def _prompt_with_profile(request) -> str:
     prompt = SYSTEM_PROMPT
     if summary:
         prompt += f"\n\nWhat you already know about this person:\n{summary}"
-    if proven:
-        # The evidence to reach for when they're frightened or stuck.
-        prompt += f"\n\nWhat this person has proven they can do:\n{proven}"
     if kept:
         # Their own chosen words carry further than anything you could phrase.
         prompt += (
@@ -193,10 +178,6 @@ def _save_exchange(message: str, reply: str, user_id: str) -> None:
         pass
     try:
         profile.maybe_refresh(user_id)
-    except Exception:
-        pass
-    try:
-        strengths.maybe_refresh(user_id)
     except Exception:
         pass
 

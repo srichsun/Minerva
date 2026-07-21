@@ -8,10 +8,8 @@ from datetime import datetime, timezone
 
 from fastapi.testclient import TestClient
 
-from app.core import db
 from app.core import security as auth
-from app.models import Fact
-from app.services import entries, strengths, voice
+from app.services import entries, voice
 from app.main import app
 
 client = TestClient(app)
@@ -76,37 +74,3 @@ def test_speak_returns_audio(monkeypatch):
     assert resp.status_code == 200
     assert resp.headers["content-type"] == "audio/mpeg"
     assert resp.content == b"fake-mp3"
-
-
-def _add_win_fact(user_id, text):
-    with db.get_session() as s:
-        s.add(Fact(user_id=user_id, entry_id=1, category="wins", text=text))
-        s.commit()
-
-
-def test_wins_endpoint_lists_win_facts(sqlite_db):
-    _add_win_fact(TEST_UID, "cold shower")
-    _add_win_fact("someone-else", "not mine")  # another user's win is hidden
-
-    resp = client.get("/wins")
-    assert resp.status_code == 200
-    wins = resp.json()["wins"]
-    assert len(wins) == 1
-    assert wins[0]["wins"] == "cold shower"
-    assert "created_at" in wins[0]
-
-
-def test_strengths_endpoint_returns_the_passage(sqlite_db, monkeypatch):
-    monkeypatch.setattr(strengths, "get_strengths", lambda uid: "You keep going.")
-
-    resp = client.get("/strengths")
-    assert resp.status_code == 200
-    assert resp.json()["strengths"] == "You keep going."
-
-
-def test_strengths_endpoint_is_empty_before_one_is_written(sqlite_db):
-    entries.save_entry("a normal day", "ok", user_id=TEST_UID)
-
-    resp = client.get("/strengths")
-    assert resp.status_code == 200
-    assert resp.json()["strengths"] == ""

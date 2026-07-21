@@ -1,9 +1,9 @@
 """One journal entry — a single conversation turn.
 
-What the user said and what the coach replied. The things once pulled out onto
-this row (mood, wins, themes) now live as atomic facts (see app.models.fact and
-app.services.facts); those columns were retired from the model, though the
-physical DB columns stay until an Alembic migration drops them.
+What the user said and what the coach replied. What an exchange is about now
+lives as atomic facts instead (see app.models.fact); the old mood/wins/themes
+columns were retired from the model, though the physical DB columns stay until
+an Alembic migration drops them.
 """
 from datetime import datetime
 

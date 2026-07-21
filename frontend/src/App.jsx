@@ -8,41 +8,6 @@ import {
   signOutUser,
 } from "./firebase";
 
-// Split a stored wins blob into its individual lines, tolerating the older
-// markdown-bulleted format from before wins became plain one-liners.
-function winLines(wins) {
-  return (wins || "")
-    .split("\n")
-    .map((l) => l.replace(/^\s*[-*•]\s*/, "").replace(/\*\*/g, "").trim())
-    .filter(Boolean);
-}
-
-// Group win-entries by their calendar day, newest first, keeping order.
-function groupByDay(items) {
-  const map = new Map();
-  for (const e of items) {
-    const day = (e.created_at || "").slice(0, 10);
-    if (!map.has(day)) map.set(day, []);
-    map.get(day).push(e);
-  }
-  return [...map.entries()];
-}
-
-// "2026-07-19" -> "Today" / "Yesterday" / "Sat, 19 Jul".
-function dayLabel(day) {
-  const today = new Date();
-  const iso = (d) => d.toISOString().slice(0, 10);
-  if (day === iso(today)) return "Today";
-  const yesterday = new Date(today);
-  yesterday.setDate(today.getDate() - 1);
-  if (day === iso(yesterday)) return "Yesterday";
-  return new Date(day + "T00:00:00").toLocaleDateString("en-GB", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  });
-}
-
 // File extension for a recording's MIME type. Browsers disagree on what they
 // record: Chrome produces "audio/webm;codecs=opus", iOS Safari "audio/mp4".
 function audioExtension(mimeType) {
@@ -141,9 +106,7 @@ export default function App() {
   const [input, setInput] = useState("");        // what's typed in the box
   const [loading, setLoading] = useState(false); // waiting for a reply?
   const [recording, setRecording] = useState(false);
-  const [view, setView] = useState("chat");      // "chat" | "wins" | "you"
-  const [wins, setWins] = useState([]);          // entries that recorded wins
-  const [passage, setPassage] = useState("");    // who you are, in her words
+  const [view, setView] = useState("chat");      // "chat" | "mantra"
   const [mantras, setMantras] = useState([]);    // lines you keep for hard days
   const [mantraDraft, setMantraDraft] = useState("");
   const [editingId, setEditingId] = useState(null); // mantra being reworded
@@ -206,26 +169,17 @@ export default function App() {
     };
   }, [user]);
 
-  // Load whichever review screen was opened: the day-by-day wins, or the
-  // passage about who they are.
+  // Load the mantra screen's lines when it's opened.
   useEffect(() => {
     if (!user || view === "chat") return;
     let cancelled = false;
     (async () => {
       try {
-        const path =
-          view === "wins"
-            ? "/wins"
-            : view === "mantra"
-              ? "/mantras"
-              : "/strengths";
-        const res = await authFetch(`${API}${path}`);
+        const res = await authFetch(`${API}/mantras`);
         if (!res.ok) return;
         const data = await res.json();
         if (cancelled) return;
-        if (view === "wins") setWins(data.wins || []);
-        else if (view === "mantra") setMantras(data.mantras || []);
-        else setPassage(data.strengths || "");
+        setMantras(data.mantras || []);
       } catch {
         /* ignore */
       }
@@ -615,18 +569,6 @@ export default function App() {
             Talk
           </button>
           <button
-            className={view === "wins" ? "on" : ""}
-            onClick={() => setView("wins")}
-          >
-            Wins
-          </button>
-          <button
-            className={view === "you" ? "on" : ""}
-            onClick={() => setView("you")}
-          >
-            You
-          </button>
-          <button
             className={view === "mantra" ? "on" : ""}
             onClick={() => setView("mantra")}
           >
@@ -688,30 +630,6 @@ export default function App() {
                 ×
               </button>
             </blockquote>
-          ))}
-        </main>
-      ) : view === "you" ? (
-        <main className="chat you-view">
-          {passage ? (
-            <article className="passage">{passage}</article>
-          ) : (
-            <p className="empty">Keep talking — this takes a few days to form.</p>
-          )}
-        </main>
-      ) : view === "wins" ? (
-        <main className="chat wins-view">
-          {wins.length === 0 && (
-            <p className="empty">Your wins will show up here as you talk.</p>
-          )}
-          {groupByDay(wins).map(([day, items]) => (
-            <section key={day} className="winday">
-              <h3>{dayLabel(day)}</h3>
-              <ul>
-                {items.flatMap((e) => winLines(e.wins).map((line, i) => (
-                  <li key={`${e.id}-${i}`}>{line}</li>
-                )))}
-              </ul>
-            </section>
           ))}
         </main>
       ) : (
