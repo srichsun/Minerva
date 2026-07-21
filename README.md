@@ -28,8 +28,8 @@ Minerva splits memory into three layers, each answering a different question:
 
 | Layer | Backed by | Answers | AI? |
 |-------|-----------|---------|-----|
-| **1. Structured log** | Postgres (plain SQL) | "What happened, and when?" — recall a day, this month's wins, mood trends | No AI, just SQL |
-| **2. Semantic recall** | pgvector + OpenAI embeddings | "What past moment is relevant to *right now*?" — she pulls back similar entries mid-conversation | Embeddings + vector search |
+| **1. Structured log** | Postgres (plain SQL) | "What happened, and when?" — recall any day, in order | No AI, just SQL |
+| **2. Semantic recall** | Atomic facts in pgvector | "What do I know that's relevant to *right now*?" — she pulls back individual facts, filed by category | An LLM splits each turn into facts; embeddings + vector search find them |
 | **3. Rolling profile** | LLM-condensed summary | "Who is this person?" — goals, habits, triggers, what helps — injected into every reply | An LLM re-condenses it |
 
 Every prompt is assembled as **profile + relevant recalled past + today's
@@ -37,7 +37,30 @@ context**. The journal in Postgres can grow forever; the prompt does not, becaus
 layers 2 and 3 keep only a fixed slice of it. That rolling profile — Minerva
 steadily learning who you are — is exactly what a stateless chatbot cannot do.
 
-## Two design decisions worth explaining
+## Three design decisions worth explaining
+
+**Memory is stored as atomic facts, not whole turns.** The first version
+embedded each turn whole. That broke as soon as it met real use: someone
+speaking for three minutes covers work, health and family in one breath, and
+averaging all three into a single 1536-dimension vector means a search for
+"health" gets diluted by the other two threads. Retrieval degraded into "find a
+day that felt similar" rather than "find the relevant moment".
+
+So each exchange is now split by an LLM into 5–10 single-topic facts, each filed
+under one of eight fixed categories (`about me`, `preferences`, `people`,
+`work & career`, `goals & aspirations`, `health & habits`, `beliefs`,
+`patterns`) and embedded on its own. The split is a rewrite, not a cut: "work
+stalled but I ran anyway" becomes a standalone "keeps running even when
+exhausted", which still makes sense when it is retrieved months later with no
+surrounding context. At retrieval, similarity search runs *alongside* the
+model's own judgement — the agent names the categories worth searching as a
+tool argument, so the two narrow the field together.
+
+Worth saying what this is *not* for: if the answer already sits in one passage
+(documentation Q&A, a clause in a contract), plain chunk-and-embed is cheaper
+and just as good. Extraction earns its cost only when the answer has to be
+*assembled* from scattered evidence — which is exactly what "what am I like when
+I'm under pressure?" requires.
 
 **There is no conversation-memory component.** An earlier version kept a
 LangGraph checkpointer so the agent could remember the current conversation.
@@ -58,7 +81,7 @@ day boundary would cut the thread at 8am local, halfway through a morning.
   you speak ──► gpt-4o-mini-transcribe (STT) ──► LangChain agent
                                                        │
              ┌─────────────────────────────────────────┼───────────────────────────┐
-             │ profile + strengths + mantras injected   │ search_past_entries tool  │
+             │ profile + mantras injected               │ search_past_entries tool  │
              │ (layer 3, every turn)                    │ → pgvector (layer 2)      │
              └─────────────────────────────────────────┼───────────────────────────┘
                                                        ▼
@@ -67,7 +90,8 @@ day boundary would cut the thread at 8am local, halfway through a morning.
                        ┌───────────────────────────────┴──────────────────┐
                        ▼                                                  ▼
               Google Cloud TTS                            save entry to Postgres (layer 1)
-              reads it aloud                              + embed it into pgvector (layer 2)
+              reads it aloud                              + split into atomic facts, embed
+                                                            each into pgvector (layer 2)
                                                           + periodically re-condense profile (layer 3)
 ```
 
@@ -81,9 +105,16 @@ for next time.
   iOS Safari makes mp4) rather than the code assuming one.
 - **Minerva** — a LangChain agent (`create_agent`) driven by **OpenAI
   `gpt-5.3-chat-latest`**, with a single `search_past_entries` tool it calls on
-  its own whenever recalling a past moment would help. Claude is a supported
-  alternative: set `LLM_PROVIDER=anthropic`. Profile, strengths, and saved
-  mantras are injected each turn via a dynamic prompt.
+  its own whenever recalling a past moment would help. The tool takes an
+  optional list of categories, so the model narrows the search itself instead of
+  relying on vector distance alone. Claude is a supported alternative: set
+  `LLM_PROVIDER=anthropic`. Profile and saved mantras are injected each turn via
+  a dynamic prompt.
+- **Fact extraction** — after each reply is sent, one small structured-output
+  call breaks the exchange into single-topic facts and files each under a fixed
+  category (`app/services/facts.py`). It runs off the reply path, so it costs
+  the person no waiting. `scripts/backfill_facts.py` does the same for entries
+  written before facts existed, carrying each entry's original date across.
 - **Voice out** — the reply is read aloud with **Google Cloud TTS**
   (`en-GB-Chirp3-HD-Callirrhoe`, a genuinely British voice). ElevenLabs and
   OpenAI TTS sit behind the same `speak()` call via `TTS_PROVIDER`. Synthesis
@@ -101,8 +132,6 @@ for next time.
 | Feature | What it is |
 |---------|------------|
 | **Talk** | Voice or text, streamed back token by token and read aloud. |
-| **Wins** | Short factual lines of what you actually did, extracted from each exchange. |
-| **You** | A passage in plain prose about who you are, written by an LLM from the whole record of wins. Meant for the days you've forgotten. |
 | **Mantra** | Lines you keep for yourself. Full CRUD, and they are injected into her prompt so she can use your own words back at you. |
 
 ## Privacy
@@ -122,11 +151,11 @@ nobody spends your keys or reads your journal.
 | LLM | **OpenAI** `gpt-5.3-chat-latest` | The family that powers ChatGPT itself; Claude swappable via `LLM_PROVIDER`. |
 | Speech-to-text | **OpenAI** `gpt-4o-mini-transcribe` | Newer and more accurate than `whisper-1` at a similar price. |
 | Text-to-speech | **Google Cloud TTS** | Real British accent, generous free tier; ElevenLabs / OpenAI behind the same call. |
-| Journal store | **Postgres + pgvector** | One database holds both the SQL entries and the vectors (LangChain `PGVector`). |
-| Embeddings | **OpenAI** `text-embedding-3-small` | Powers semantic recall. |
+| Journal store | **Postgres + pgvector** | One database holds the entries, the extracted facts, and their vectors (LangChain `PGVector`). |
+| Embeddings | **OpenAI** `text-embedding-3-small` | One vector per atomic fact, so a search matches a single topic. |
 | Auth | **Firebase Auth** (Google) | No passwords handled here; per-user scoping from a verified uid. |
 | Tracing | **LangSmith** | Every chain/agent call is traced. |
-| Frontend | **React (Vite)** | Chat, Wins, You, and Mantra screens with mic recording + spoken replies. |
+| Frontend | **React (Vite)** | Chat and Mantra screens with mic recording + spoken replies. |
 | Lint | **ruff** | Lint and format in one fast tool. |
 | CI/CD | **GitHub Actions** | ruff + pytest on every push; green main deploys itself. |
 | Deploy | **Google Cloud** | Cloud Run + Cloud SQL (Postgres + pgvector) + Secret Manager. |
@@ -135,7 +164,7 @@ nobody spends your keys or reads your journal.
 
 ```
 app/
-  main.py            FastAPI app: mounts the router, creates tables, serves the built frontend
+  main.py            FastAPI app: mounts the router, migrates on boot, serves the built frontend
   api/
     router.py        collects every route module
     deps.py          CurrentUid — annotate a route with it to require sign-in
@@ -143,13 +172,13 @@ app/
   services/
     agent.py         LangChain agent (create_agent + tool + prompt injection)
     chat_model.py    builds the chat model chosen by LLM_PROVIDER
+    facts.py         splits each exchange into atomic facts, filed by category
     recall.py        semantic recall — search_past_entries over pgvector (layer 2)
     profile.py       rolling LLM-condensed profile (layer 3)
-    strengths.py     the "You" passage, written from the whole record of wins
-    entries.py       plain-SQL journal: save, recall a day, list wins (layer 1)
+    entries.py       plain-SQL journal: save and recall a day (layer 1)
     mantras.py       the lines you keep, and their prompt text
     voice.py         speech-to-text + text-to-speech
-  models/            SQLAlchemy tables: Entry, Profile, Mantra
+  models/            SQLAlchemy tables: Entry, Fact, Profile, Mantra
   schemas/           request/response models
   core/
     config.py        settings from env / .env
@@ -159,7 +188,8 @@ app/
 migrations/          Alembic: one file per schema change, applied in order
 scripts/
   init_db.py         bring the schema up to date (alembic upgrade head)
-  deploy_gcp.sh      provision Cloud Run + Cloud SQL + Secret Manager
+  backfill_facts.py  extract facts from entries written before facts existed
+  deploy_gcp.sh      first-run provisioning: Cloud Run + Cloud SQL + Secret Manager
 frontend/            React (Vite) UI behind a Google sign-in gate
 Dockerfile           container image for Cloud Run
 .gcloudignore        keeps node_modules out of the deploy upload
@@ -197,9 +227,6 @@ Open http://127.0.0.1:8000/docs for the interactive Swagger UI.
 | POST | `/transcribe`        | ✅ | Upload recorded audio → text. |
 | POST | `/speak`             | ✅ | Text → spoken audio (mp3) for the browser to play. |
 | GET  | `/entries?day=`      | ✅ | Recall one day's entries (`YYYY-MM-DD`, defaults to today, Taiwan time). |
-| GET  | `/wins`              | ✅ | The most recent entries where a win was recorded. |
-| GET  | `/strengths`         | ✅ | The "You" passage, written from your record of wins. |
-| POST | `/strengths/refresh` | ✅ | Force a rewrite of that passage. |
 | GET  | `/profile`           | ✅ | The long-term profile Minerva has built about you. |
 | POST | `/profile/refresh`   | ✅ | Force a re-condense of the profile (normally automatic every few entries). |
 | GET  | `/mantras`           | ✅ | The lines you've kept. |
@@ -211,7 +238,7 @@ Protected endpoints expect `Authorization: Bearer <Firebase ID token>`.
 
 ## Web UI
 
-The React (Vite) frontend in `frontend/` has four screens — chat, Wins, You,
+The React (Vite) frontend in `frontend/` has two screens — chat
 and Mantra — behind a Google sign-in gate. With the API running, start it in a
 second terminal:
 
