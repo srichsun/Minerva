@@ -57,7 +57,7 @@ def get_profile(user_id: str) -> str:
         return row.content if row else ""
 
 
-def condense(existing: str, recent_text: str) -> str:
+def _condense(existing: str, recent_text: str) -> str:
     """Fold recent entries into the existing profile and return the new text."""
     prompt = _CONDENSE_PROMPT.format(
         existing=existing or "(empty)", recent=recent_text or "(none)"
@@ -73,7 +73,7 @@ def refresh_profile(user_id: str) -> str:
     rows = entries.recent_entries(user_id)
     recent_text = "\n".join(f"- {e.transcript}" for e in rows)
     existing = get_profile(user_id)
-    updated = condense(existing, recent_text)
+    updated = _condense(existing, recent_text)
     with db.get_session() as s:
         row = s.get(Profile, user_id)
         if row is None:

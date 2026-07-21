@@ -17,7 +17,7 @@ def _coach_with(replies):
     recall tool); these tests only exercise plain replies and memory.
     """
     fake = GenericFakeChatModel(messages=iter([AIMessage(r) for r in replies]))
-    return agent.build_agent(fake, tools=[], middleware=[])
+    return agent._build_agent(fake, tools=[], middleware=[])
 
 
 # --- coach agent ---
@@ -81,7 +81,7 @@ def test_reply_and_save_saves_a_journal_entry(sqlite_db, monkeypatch):
     # Skip the real extraction LLM call; return fixed tags.
     monkeypatch.setattr(
         agent,
-        "extract_tags",
+        "_extract_tags",
         lambda t, r: agent.EntryTags(mood="proud", wins="ran 5k", themes="health"),
     )
     # Capture the semantic index call instead of hitting the real vector store.

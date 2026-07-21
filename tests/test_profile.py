@@ -20,7 +20,7 @@ def test_refresh_condenses_and_saves(sqlite_db, monkeypatch):
     seen = {}
     monkeypatch.setattr(
         profile,
-        "condense",
+        "_condense",
         lambda existing, recent: seen.update(existing=existing, recent=recent)
         or "- runs regularly\n- job hunting",
     )
@@ -38,7 +38,7 @@ def test_profile_is_scoped_per_user(sqlite_db, monkeypatch):
     entries.save_entry("only mine", "ok", user_id=U)
     entries.save_entry("only theirs", "ok", user_id="other")
     monkeypatch.setattr(
-        profile, "condense", lambda existing, recent: f"seen:{recent}"
+        profile, "_condense", lambda existing, recent: f"seen:{recent}"
     )
 
     profile.refresh_profile(U)
@@ -50,12 +50,12 @@ def test_profile_is_scoped_per_user(sqlite_db, monkeypatch):
 
 def test_refresh_carries_forward_existing_profile(sqlite_db, monkeypatch):
     entries.save_entry("first", "ok", user_id=U)
-    monkeypatch.setattr(profile, "condense", lambda e, r: "v1")
+    monkeypatch.setattr(profile, "_condense", lambda e, r: "v1")
     profile.refresh_profile(U)
 
     captured = {}
     monkeypatch.setattr(
-        profile, "condense", lambda e, r: captured.update(existing=e) or "v2"
+        profile, "_condense", lambda e, r: captured.update(existing=e) or "v2"
     )
     profile.refresh_profile(U)
     # The second condense sees the first profile as its starting point.

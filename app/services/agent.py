@@ -81,10 +81,10 @@ def _prompt_with_profile(request) -> str:
     return prompt
 
 
-def build_agent(model, tools=None, middleware=None):
+def _build_agent(model, tools=None, middleware=None):
     """Wrap a chat model into a coach agent with memory.
 
-    Split out so tests can pass a fake, offline model instead of real Claude.
+    Split out so tests can pass a fake, offline model instead of a real one.
     Tests pass tools=[] (the fake model can't bind tools) and middleware=[]
     (so no profile lookup hits the database); the real coach defaults to the
     recall tool and the profile-injecting middleware.
@@ -103,7 +103,7 @@ def build_agent(model, tools=None, middleware=None):
 
 
 # Built once at startup and reused for every request.
-_agent = build_agent(chat_model.build_chat_model())
+_agent = _build_agent(chat_model.build_chat_model())
 
 # --- what the coach sees each turn ---
 
@@ -194,7 +194,7 @@ class EntryTags(BaseModel):
 _extractor = chat_model.build_chat_model().with_structured_output(EntryTags)
 
 
-def extract_tags(transcript: str, reply: str) -> EntryTags:
+def _extract_tags(transcript: str, reply: str) -> EntryTags:
     """Pull mood / wins / themes out of one exchange."""
     prompt = (
         "From this journaling exchange, extract:\n"
@@ -218,7 +218,7 @@ def _save_exchange(message: str, reply: str, user_id: str) -> None:
     """Save one exchange as a journal entry, then embed it and (occasionally)
     refresh the profile. Failures in the extras never lose the saved entry."""
     try:
-        tags = extract_tags(message, reply)
+        tags = _extract_tags(message, reply)
     except Exception:
         tags = EntryTags()
     entry_id = entries.save_entry(
