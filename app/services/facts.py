@@ -11,6 +11,7 @@ that count. That's the same material the old tag extraction produced, now folded
 into this single call so there's no second model round-trip: the wins review
 screen and the strengths passage both read wins straight back out of here.
 """
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -89,18 +90,29 @@ _EXTRACT_PROMPT = (
 
 
 def extract_and_save(
-    entry_id: int, transcript: str, reply: str, user_id: str
+    entry_id: int,
+    transcript: str,
+    reply: str,
+    user_id: str,
+    created_at: datetime | None = None,
 ) -> list[int]:
     """Pull atomic facts from one exchange, store them, and index each.
 
     Returns the new fact row ids. One model call does all the categorising,
     including wins, so the store stays a single source for both semantic recall
     and the wins list.
+
+    created_at defaults to now, which is right for a live exchange. Backfilling
+    old entries must pass the entry's own timestamp instead.
     """
     result = _extractor.invoke(
         _EXTRACT_PROMPT.format(transcript=transcript, reply=reply)
     )
     fact_ids: list[int] = []
+    # A fact happened when its exchange did, not when we got round to reading
+    # it. Backfilling months of journal in one afternoon would otherwise stamp
+    # every fact with today, and the wins screen groups by day.
+    stamp = {"created_at": created_at} if created_at is not None else {}
     with db.get_session() as s:
         rows = [
             Fact(
@@ -108,6 +120,7 @@ def extract_and_save(
                 entry_id=entry_id,
                 category=f.category,
                 text=f.text,
+                **stamp,
             )
             for f in result.facts
             if f.text and f.text.strip()

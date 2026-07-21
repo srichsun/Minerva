@@ -32,7 +32,9 @@ def main() -> None:
     print(f"{len(todo)} ent(r)ies to process (of {len(all_entries)} total).")
     for i, e in enumerate(todo, 1):
         try:
-            ids = facts.extract_and_save(e.id, e.transcript, e.ai_reply, e.user_id)
+            ids = facts.extract_and_save(
+                e.id, e.transcript, e.ai_reply, e.user_id, created_at=e.created_at
+            )
             print(f"[{i}/{len(todo)}] entry {e.id}: {len(ids)} facts")
         except Exception as exc:  # keep going; one bad entry shouldn't stop it
             print(f"[{i}/{len(todo)}] entry {e.id}: FAILED — {exc}")

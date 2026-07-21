@@ -4,6 +4,8 @@ The extraction is an LLM call, so it's faked here — these check the glue: that
 each fact is written to the facts table, each is handed to the vector index, and
 the wins helper reads back only wins.
 """
+from datetime import datetime, timezone
+
 from app.services import facts
 
 
@@ -111,3 +113,34 @@ def test_recent_wins_is_scoped_to_one_person(sqlite_db, monkeypatch):
 
     assert [w.text for w in facts.recent_wins("u1")] == ["mine"]
     assert [w.text for w in facts.recent_wins("u2")] == ["theirs"]
+
+
+def test_backfilled_facts_keep_the_entry_s_own_date(sqlite_db, monkeypatch):
+    """A fact happened when its exchange did. Backfilling a year of journal in
+    one afternoon must not stamp every fact with today — the wins screen groups
+    by day, so that would collapse the whole history onto one date."""
+    monkeypatch.setattr(facts.recall, "index_fact", lambda *a, **k: None)
+    monkeypatch.setattr(
+        facts, "_extractor", _FakeExtractor(_result(("wins", "ran 5k")))
+    )
+    back_then = datetime(2026, 3, 4, 9, 30, tzinfo=timezone.utc)
+
+    facts.extract_and_save(1, "a", "b", user_id="u1", created_at=back_then)
+
+    # SQLite drops the tzinfo Postgres would keep, so compare the instant only.
+    saved = facts.recent_wins("u1")[0].created_at
+    assert saved.replace(tzinfo=None) == back_then.replace(tzinfo=None)
+
+
+def test_a_live_exchange_is_stamped_now(sqlite_db, monkeypatch):
+    """With no date passed — the live path — the fact is stamped as it lands."""
+    monkeypatch.setattr(facts.recall, "index_fact", lambda *a, **k: None)
+    monkeypatch.setattr(
+        facts, "_extractor", _FakeExtractor(_result(("wins", "cold shower")))
+    )
+    before = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    facts.extract_and_save(1, "a", "b", user_id="u1")
+
+    saved = facts.recent_wins("u1")[0].created_at
+    assert saved.replace(tzinfo=None) >= before
