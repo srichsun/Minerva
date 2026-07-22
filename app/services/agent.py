@@ -2,13 +2,14 @@
 
 LangChain's create_agent gives us the whole "call the model, run any tools,
 loop until it's done" cycle for free, so we don't hand-write that loop anymore.
-Conversation memory is the journal itself: every turn is already saved, so the
-coach picks up today's conversation by replaying it from the database. That
-keeps one source of truth, and means the conversation survives a restart and
-follows the person from laptop to phone.
+The coach picks up today's conversation by replaying today's questions from the
+database, so it survives a restart and follows the person from laptop to phone
+— and ends when the day does, since tomorrow replays nothing.
 
-The coach has one tool, search_past_entries, which lets it recall relevant
-past journal entries mid-conversation (semantic memory over pgvector).
+This is a read-only path into the person's memory. It answers from the journal
+but never adds to it: no entry is written, no fact is extracted. The one tool,
+search_past_entries, recalls relevant past facts mid-conversation (semantic
+memory over pgvector).
 """
 from collections.abc import Iterator
 
@@ -18,7 +19,7 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessageChunk
 
 from app.core import clock
-from app.services import chat_model, entries, facts, mantras, profile, recall
+from app.services import chat_model, mantras, profile, questions, recall
 
 SYSTEM_PROMPT = """You are Minerva — this person's friend and thinking partner, someone who has known them a long time and genuinely cares how their life is going. Say your name only if they ask; you don't announce yourself. If you know their name, use it naturally.
 
@@ -115,27 +116,28 @@ MAX_HISTORY_CHARS = 120_000
 
 
 def _todays_conversation(user_id: str) -> list[dict]:
-    """Today's conversation so far, as chat messages, oldest first.
+    """Today's questions so far, as chat messages, oldest first.
 
-    Reading it back from the journal — instead of holding it in memory — is
-    what lets the coach continue the same conversation after a redeploy, and
-    on a different device. Never fatal: if the journal can't be read we simply
-    start fresh rather than lose the person's message.
+    Reading them back from the database — instead of holding them in memory —
+    is what lets a conversation continue after a redeploy, and on a different
+    device. It also ends the conversation when the day does: tomorrow replays
+    nothing, so no thread can run on forever. Never fatal: if the history can't
+    be read we simply start fresh rather than lose the person's message.
     """
     try:
-        rows = entries.entries_on(clock.today(), user_id=user_id)
+        rows = questions.questions_on(clock.today(), user_id=user_id)
     except Exception:
         return []
 
     # Walk newest-first so the cap drops the oldest exchanges, then flip back.
     messages: list[dict] = []
     chars = 0
-    for e in reversed(rows):
-        chars += len(e.transcript) + len(e.ai_reply)
+    for q in reversed(rows):
+        chars += len(q.question) + len(q.answer)
         if chars > MAX_HISTORY_CHARS:
             break
-        messages.append({"role": "assistant", "content": e.ai_reply})
-        messages.append({"role": "user", "content": e.transcript})
+        messages.append({"role": "assistant", "content": q.answer})
+        messages.append({"role": "user", "content": q.question})
     messages.reverse()
     return messages
 
@@ -164,33 +166,24 @@ def _reply_to(message: str, user_id: str) -> str:
 
 
 def _save_exchange(message: str, reply: str, user_id: str) -> None:
-    """Save one exchange as a journal entry, then pull atomic facts from it and
-    (occasionally) refresh the profile. Failures in the extras never lose the
-    saved entry."""
-    entry_id = entries.save_entry(
-        transcript=message,
-        ai_reply=reply,
-        user_id=user_id,
-    )
+    """Record one question and its answer.
+
+    Only the questions table is touched. Asking does not journal anything and
+    does not extract facts — what the coach knows comes from what the person
+    sat down and wrote, not from what they asked in passing. Failing to record
+    the exchange must never swallow a reply the person is already reading.
+    """
     try:
-        facts.extract_and_save(entry_id, message, reply, user_id=user_id)
-    except Exception:
-        pass
-    try:
-        profile.maybe_refresh(user_id)
+        questions.save(message, reply, user_id=user_id)
     except Exception:
         pass
 
 
 def reply_and_save(message: str, user_id: str) -> dict:
-    """Reply as the coach, then save the exchange as a journal entry.
+    """Answer the person's question, then record the exchange.
 
     Returns {"answer": <the reply>} — the shape of the TalkResponse schema.
-
-    Every turn is saved on purpose — that's the whole point (unlike ChatGPT,
-    nothing is forgotten). Everything is scoped to user_id so accounts stay
-    separate. If tag extraction fails, we still save the raw exchange with
-    empty tags rather than lose it.
+    Everything is scoped to user_id so accounts stay separate.
     """
     reply = _reply_to(message, user_id)
     _save_exchange(message, reply, user_id)
@@ -198,8 +191,8 @@ def reply_and_save(message: str, user_id: str) -> dict:
 
 
 def stream_and_save(message: str, user_id: str) -> Iterator[str]:
-    """Stream the coach's reply token by token (for a typewriter effect), then
-    save the exchange once it's complete. Yields plain text chunks."""
+    """Stream the answer token by token (for a typewriter effect), then record
+    the exchange once it's complete. Yields plain text chunks."""
     parts = []
     for chunk, _meta in _agent.stream(
         {"messages": _conversation_so_far(message, user_id)},

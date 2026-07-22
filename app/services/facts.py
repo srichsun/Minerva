@@ -1,10 +1,13 @@
-"""Atomic facts pulled from each exchange — the semantic-memory raw material.
+"""Atomic facts pulled from each journal entry — the semantic-memory raw material.
 
-One journaling turn often mixes several topics. Instead of storing the whole
-turn as one vector (which blurs the topics together), we ask a small model to
-break it into 5-10 single-topic facts, each filed under one fixed `category`.
-Each fact is then embedded on its own, so recall over "health" matches only the
-health fact, not a whole turn where health was one thread among many.
+A day's writing mixes several topics. Instead of storing the whole entry as one
+vector (which blurs the topics together), we ask a small model to break it into
+5-10 single-topic facts, each filed under one fixed `category`. Each fact is
+then embedded on its own, so recall over "health" matches only the health fact,
+not a whole day where health was one thread among many.
+
+Extraction runs only when the person presses Analyse. Nothing else in the app
+writes facts, so the memory grows from what they chose to write down.
 """
 from datetime import datetime
 
@@ -36,7 +39,7 @@ class _FactList(BaseModel):
 _extractor = chat_model.build_chat_model().with_structured_output(_FactList)
 
 _EXTRACT_PROMPT = (
-    "Break this journaling exchange into atomic facts about the person — 5 to "
+    "Break this day's journal entry into atomic facts about the person — 5 to "
     "10 short, single-topic statements. Each fact must sit under exactly one "
     "category:\n"
     "- about me: lasting facts about who they are (age, job, where they live, "
@@ -52,30 +55,29 @@ _EXTRACT_PROMPT = (
     "shower', 'two hours on the project while exhausted', 'made a call they "
     "were afraid of'). Small counts — holding momentum on a hard day is a win. "
     "No praise, no adjectives, no explaining why it mattered.\n"
+    "- gratitude: something they were glad of that day — a person, a moment, "
+    "something that went right. State it plainly, as they'd say it.\n"
     "Keep each fact to one topic — never fold work and health into one line. "
     "Only state what's actually here; invent nothing. Return an empty list if "
     "there is genuinely nothing.\n\n"
-    "Person: {transcript}\nCoach: {reply}"
+    "Journal entry:\n{content}"
 )
 
 
 def extract_and_save(
     entry_id: int,
-    transcript: str,
-    reply: str,
+    content: str,
     user_id: str,
     created_at: datetime | None = None,
 ) -> list[int]:
-    """Pull atomic facts from one exchange, store them, and index each.
+    """Pull atomic facts from one day's journal entry, store them, index each.
 
     Returns the new fact row ids.
 
-    created_at defaults to now, which is right for a live exchange. Backfilling
-    old entries must pass the entry's own timestamp instead.
+    created_at defaults to now, which is right for a day being analysed as it
+    happens. Backfilling old entries must pass the entry's own timestamp.
     """
-    result = _extractor.invoke(
-        _EXTRACT_PROMPT.format(transcript=transcript, reply=reply)
-    )
+    result = _extractor.invoke(_EXTRACT_PROMPT.format(content=content))
     fact_ids: list[int] = []
     # A fact happened when its exchange did, not when we got round to reading
     # it, so a backfill of months of journal must not stamp everything today.

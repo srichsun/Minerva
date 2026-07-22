@@ -53,7 +53,7 @@ def test_extract_and_save_writes_every_fact_and_indexes_it(sqlite_db, monkeypatc
         ),
     )
 
-    ids = facts.extract_and_save(7, "tired but ran", "proud of you", user_id="u1")
+    ids = facts.extract_and_save(7, "tired but ran", user_id="u1")
 
     assert len(ids) == 3
     # Every fact landed in the table, keyed to the entry and owner.
@@ -76,7 +76,7 @@ def test_extract_and_save_skips_blank_facts(sqlite_db, monkeypatch):
         facts.recall, "index_fact", lambda *a, **k: None
     )
 
-    ids = facts.extract_and_save(1, "t", "r", user_id="u1")
+    ids = facts.extract_and_save(1, "t", user_id="u1")
 
     assert len(ids) == 1
 
@@ -88,30 +88,30 @@ def _saved_facts(user_id):
 
 
 def test_backfilled_facts_keep_the_entry_s_own_date(sqlite_db, monkeypatch):
-    """A fact happened when its exchange did. Backfilling a year of journal in
-    one afternoon must not stamp every fact with today."""
+    """A fact happened on the day it was written about. Backfilling a year of
+    journal in one afternoon must not stamp every fact with today."""
     monkeypatch.setattr(facts.recall, "index_fact", lambda *a, **k: None)
     monkeypatch.setattr(
         facts, "_extractor", _FakeExtractor(_result(("health & habits", "ran 5k")))
     )
     back_then = datetime(2026, 3, 4, 9, 30, tzinfo=timezone.utc)
 
-    facts.extract_and_save(1, "a", "b", user_id="u1", created_at=back_then)
+    facts.extract_and_save(1, "a", user_id="u1", created_at=back_then)
 
     # SQLite drops the tzinfo Postgres would keep, so compare the instant only.
     saved = _saved_facts("u1")[0].created_at
     assert saved.replace(tzinfo=None) == back_then.replace(tzinfo=None)
 
 
-def test_a_live_exchange_is_stamped_now(sqlite_db, monkeypatch):
-    """With no date passed — the live path — the fact is stamped as it lands."""
+def test_todays_analysis_is_stamped_now(sqlite_db, monkeypatch):
+    """With no date passed — analysing today — the fact is stamped as it lands."""
     monkeypatch.setattr(facts.recall, "index_fact", lambda *a, **k: None)
     monkeypatch.setattr(
         facts, "_extractor", _FakeExtractor(_result(("beliefs", "cold shower")))
     )
     before = datetime.now(timezone.utc).replace(tzinfo=None)
 
-    facts.extract_and_save(1, "a", "b", user_id="u1")
+    facts.extract_and_save(1, "a", user_id="u1")
 
     saved = _saved_facts("u1")[0].created_at
     assert saved.replace(tzinfo=None) >= before

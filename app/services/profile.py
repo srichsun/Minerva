@@ -71,7 +71,7 @@ def refresh_profile(user_id: str) -> str:
     Returns the updated profile text.
     """
     rows = entries.recent_entries(user_id)
-    recent_text = "\n".join(f"- {e.transcript}" for e in rows)
+    recent_text = "\n".join(f"- {e.entry_date}: {e.content}" for e in rows)
     existing = get_profile(user_id)
     updated = _condense(existing, recent_text)
     with db.get_session() as s:

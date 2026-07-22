@@ -5,7 +5,7 @@ that we gather one person's recent entries, save the condensed text keyed by
 their uid, count what's folded in, and only re-condense once enough new entries
 have accumulated.
 """
-from app.services import entries, profile
+from app.services import profile
 
 U = "u-profile"
 
@@ -14,9 +14,8 @@ def test_get_profile_empty_when_none(sqlite_db):
     assert profile.get_profile(U) == ""
 
 
-def test_refresh_condenses_and_saves(sqlite_db, monkeypatch):
-    entries.save_entry("I started running again", "great start", user_id=U)
-    entries.save_entry("Nervous about the interview", "you'll do well", user_id=U)
+def test_refresh_condenses_and_saves(write_days, monkeypatch):
+    write_days(U, "I started running again", "Nervous about the interview")
     seen = {}
     monkeypatch.setattr(
         profile,
@@ -34,9 +33,9 @@ def test_refresh_condenses_and_saves(sqlite_db, monkeypatch):
     assert seen["existing"] == ""
 
 
-def test_profile_is_scoped_per_user(sqlite_db, monkeypatch):
-    entries.save_entry("only mine", "ok", user_id=U)
-    entries.save_entry("only theirs", "ok", user_id="other")
+def test_profile_is_scoped_per_user(write_days, monkeypatch):
+    write_days(U, "only mine")
+    write_days("other", "only theirs")
     monkeypatch.setattr(
         profile, "_condense", lambda existing, recent: f"seen:{recent}"
     )
@@ -48,8 +47,8 @@ def test_profile_is_scoped_per_user(sqlite_db, monkeypatch):
     assert profile.get_profile("other") == ""
 
 
-def test_refresh_carries_forward_existing_profile(sqlite_db, monkeypatch):
-    entries.save_entry("first", "ok", user_id=U)
+def test_refresh_carries_forward_existing_profile(write_days, monkeypatch):
+    write_days(U, "first")
     monkeypatch.setattr(profile, "_condense", lambda e, r: "v1")
     profile.refresh_profile(U)
 
@@ -62,17 +61,16 @@ def test_refresh_carries_forward_existing_profile(sqlite_db, monkeypatch):
     assert captured["existing"] == "v1"
 
 
-def test_maybe_refresh_waits_for_enough_entries(sqlite_db, monkeypatch):
+def test_maybe_refresh_waits_for_enough_days(write_days, monkeypatch):
     calls = []
     monkeypatch.setattr(profile, "refresh_profile", lambda uid: calls.append(uid))
 
     # Below the threshold: no refresh.
-    for _ in range(profile.REFRESH_EVERY - 1):
-        entries.save_entry("x", "y", user_id=U)
+    write_days(U, *["x"] * (profile.REFRESH_EVERY - 1))
     profile.maybe_refresh(U)
     assert calls == []
 
-    # One more crosses the threshold: refresh fires.
-    entries.save_entry("x", "y", user_id=U)
+    # One more day crosses the threshold: refresh fires.
+    write_days(U, "x", ending_days_ago=profile.REFRESH_EVERY - 1)
     profile.maybe_refresh(U)
     assert calls == [U]

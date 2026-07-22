@@ -7,7 +7,7 @@ from langchain_core.language_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 
 from app.core import clock
-from app.services import agent, entries
+from app.services import agent, entries, facts, questions
 
 
 def _coach_with(replies):
@@ -28,10 +28,10 @@ def test_coach_replies(monkeypatch):
 
 
 def test_coach_replays_todays_conversation(sqlite_db, monkeypatch):
-    """Memory comes from the journal, not from anything the caller passes in —
+    """History comes from the database, not from anything the caller passes in —
     which is what lets a conversation continue on another device or after a
     restart."""
-    entries.save_entry("I was nervous", "tell me more", user_id="u1")
+    questions.save("I was nervous", "tell me more", user_id="u1")
     seen = {}
     monkeypatch.setattr(
         agent,
@@ -57,8 +57,8 @@ def test_history_drops_oldest_when_a_day_runs_long(sqlite_db, monkeypatch):
     """The safety valve trims the oldest exchanges rather than letting the
     request blow past the model's context limit."""
     monkeypatch.setattr(agent, "MAX_HISTORY_CHARS", 100)
-    entries.save_entry("x" * 80, "y" * 80, user_id="u1")  # oldest, too big
-    entries.save_entry("recent", "reply", user_id="u1")
+    questions.save("x" * 80, "y" * 80, user_id="u1")  # oldest, too big
+    questions.save("recent", "reply", user_id="u1")
 
     history = agent._todays_conversation("u1")
 
@@ -68,34 +68,36 @@ def test_history_drops_oldest_when_a_day_runs_long(sqlite_db, monkeypatch):
     ]
 
 
-def test_history_is_empty_when_the_journal_cannot_be_read(monkeypatch):
+def test_history_is_empty_when_it_cannot_be_read(monkeypatch):
     """A database hiccup must never swallow the person's message."""
     monkeypatch.setattr(
-        agent.entries, "entries_on", lambda *a, **k: (_ for _ in ()).throw(OSError())
+        agent.questions,
+        "questions_on",
+        lambda *a, **k: (_ for _ in ()).throw(OSError()),
     )
     assert agent._todays_conversation("u1") == []
 
 
-def test_reply_and_save_saves_a_journal_entry(sqlite_db, monkeypatch):
+def test_reply_and_save_records_the_question(sqlite_db, monkeypatch):
     monkeypatch.setattr(agent, "_agent", _coach_with(["proud of you"]))
-    # Skip the real fact-extraction LLM + vector store; just record the call.
-    extracted = []
-    monkeypatch.setattr(
-        agent.facts,
-        "extract_and_save",
-        lambda eid, transcript, reply, user_id=None: extracted.append(
-            (eid, transcript, reply, user_id)
-        )
-        or [],
-    )
 
-    result = agent.reply_and_save("I ran 5k today", user_id="u1")
+    result = agent.reply_and_save("what have I done lately?", user_id="u1")
     assert result["answer"] == "proud of you"
 
-    # The exchange should now be in the database, owned by u1.
-    saved = entries.entries_on(clock.today(), user_id="u1")
+    saved = questions.questions_on(clock.today(), user_id="u1")
     assert len(saved) == 1
-    assert saved[0].transcript == "I ran 5k today"
+    assert saved[0].question == "what have I done lately?"
+    assert saved[0].answer == "proud of you"
 
-    # ...and handed to fact extraction, keyed by the saved row id and user.
-    assert extracted == [(saved[0].id, "I ran 5k today", "proud of you", "u1")]
+
+def test_asking_never_touches_the_journal(sqlite_db, monkeypatch):
+    """The whole point of the split: what the coach knows comes from what the
+    person wrote, so asking must add neither an entry nor a fact. Fact
+    extraction is left unfaked on purpose — if the read path ever called it,
+    the test would try to reach a real model and fail loudly."""
+    monkeypatch.setattr(agent, "_agent", _coach_with(["you kept going"]))
+
+    agent.reply_and_save("remind me what I'm good at", user_id="u1")
+
+    assert entries.count_entries("u1") == 0
+    assert facts.existing_fact_entry_ids("u1") == set()

@@ -4,13 +4,11 @@ Every data route now requires a signed-in user. We override the auth
 dependency with a fixed test uid instead of verifying a real Firebase token,
 and scope the entries we create to that same uid.
 """
-from datetime import datetime, timezone
-
 from fastapi.testclient import TestClient
 
 from app.core import clock
 from app.core import security as auth
-from app.services import agent, entries, voice
+from app.services import agent, entries, questions, voice
 from app.main import app
 
 client = TestClient(app)
@@ -46,7 +44,7 @@ def test_a_blank_turn_is_rejected_before_it_costs_anything(sqlite_db):
         assert client.post("/agent/stream", json={"question": blank}).status_code == 422
 
     # Nothing was written.
-    assert entries.entries_on(clock.today(), user_id=TEST_UID) == []
+    assert questions.questions_on(clock.today(), user_id=TEST_UID) == []
 
 
 def test_surrounding_whitespace_is_stripped_from_what_is_stored(sqlite_db, monkeypatch):
@@ -61,25 +59,29 @@ def test_surrounding_whitespace_is_stripped_from_what_is_stored(sqlite_db, monke
     assert saved["m"] == "I ran 5k today"
 
 
-def test_entries_endpoint_returns_todays_entries(sqlite_db):
-    entries.save_entry("felt good today", "love that", user_id=TEST_UID)
-    today = datetime.now(timezone.utc).date().isoformat()
+def test_entries_endpoint_returns_the_recent_days(sqlite_db):
+    entries.save_today("felt good today", TEST_UID, energy=8)
 
-    resp = client.get(f"/entries?day={today}")
+    resp = client.get("/entries?days=7")
     assert resp.status_code == 200
     body = resp.json()
-    assert body["day"] == today
+    assert body["end"] == clock.today().isoformat()
     assert len(body["entries"]) == 1
-    assert body["entries"][0]["transcript"] == "felt good today"
+    assert body["entries"][0]["content"] == "felt good today"
+    assert body["entries"][0]["energy"] == 8
+    assert body["entries"][0]["edits_left"] == entries.EDIT_LIMIT
 
 
 def test_entries_are_scoped_to_the_signed_in_user(sqlite_db):
     # Someone else's entry must not show up for TEST_UID.
-    entries.save_entry("their private day", "ok", user_id="someone-else")
-    today = datetime.now(timezone.utc).date().isoformat()
+    entries.save_today("their private day", "someone-else")
 
-    resp = client.get(f"/entries?day={today}")
-    assert resp.json()["entries"] == []
+    assert client.get("/entries?days=7").json()["entries"] == []
+
+
+def test_a_day_nobody_wrote_is_a_404(sqlite_db):
+    """Absent, not blank — the record screen draws a gap rather than a hole."""
+    assert client.get("/entries/2020-01-01").status_code == 404
 
 
 def test_transcribe_returns_whisper_text(monkeypatch):

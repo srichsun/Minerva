@@ -23,11 +23,12 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, now
 
-# The eight "who this person is" categories, plus `wins` — what they actually
-# did that counts. Wins earn their own category because "remind me what I've
-# done" is a different question from "what am I like", and she needs to search
-# it directly on the days someone has forgotten. Order is the order the model
-# sees them.
+# The eight "who this person is" categories, plus two the product shows back on
+# its own screen: `wins` — what they actually did that counts — and `gratitude`
+# — what they were glad of. Those two earn their own categories because "remind
+# me what I've done" and "what has been good" are different questions from
+# "what am I like", and both are surfaced directly rather than only searched.
+# Order is the order the model sees them.
 CATEGORIES = (
     "about me",
     "preferences",
@@ -38,6 +39,7 @@ CATEGORIES = (
     "beliefs",
     "patterns",
     "wins",
+    "gratitude",
 )
 
 # The same list as a type, so both the extractor's schema and the recall tool's

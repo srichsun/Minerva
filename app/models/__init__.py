@@ -10,7 +10,17 @@ from app.models.entry import Entry
 from app.models.fact import CATEGORIES, Category, Fact
 from app.models.mantra import Mantra
 from app.models.profile import Profile
+from app.models.question import Question
 
 # Marks these as deliberate re-exports, so the linter doesn't read them as
 # unused imports.
-__all__ = ["Base", "CATEGORIES", "Category", "Entry", "Fact", "Mantra", "Profile"]
+__all__ = [
+    "Base",
+    "CATEGORIES",
+    "Category",
+    "Entry",
+    "Fact",
+    "Mantra",
+    "Profile",
+    "Question",
+]
