@@ -1,17 +1,24 @@
-"""Long-term profile tests.
+"""Rolling-read tests.
 
-The LLM condense step is mocked, so these run offline and check the wiring:
-that we gather one person's recent entries, save the condensed text keyed by
-their uid, count what's folded in, and only re-condense once enough new entries
-have accumulated.
+The condense step is an LLM call, so it's mocked — what's checked here is the
+wiring: that one person's own days are the raw material, that the previous
+reading is carried forward, that the energy ratings go in alongside the
+writing, and that nothing rebuilds it unless asked.
 """
 from app.services import profile
 
 U = "u-profile"
 
+READING = {
+    "who_you_are": "- runs regularly",
+    "patterns": "- goes quiet when overloaded",
+    "energy": "- mornings are the good hours",
+}
 
-def test_get_profile_empty_when_none(sqlite_db):
-    assert profile.get_profile(U) == ""
+
+def test_no_reading_until_one_is_built(sqlite_db):
+    assert profile.get_profile(U) == {}
+    assert profile.as_prompt_text(U) == ""
 
 
 def test_refresh_condenses_and_saves(write_days, monkeypatch):
@@ -21,56 +28,77 @@ def test_refresh_condenses_and_saves(write_days, monkeypatch):
         profile,
         "_condense",
         lambda existing, recent: seen.update(existing=existing, recent=recent)
-        or "- runs regularly\n- job hunting",
+        or READING,
     )
 
-    text = profile.refresh_profile(U)
-
-    assert text == "- runs regularly\n- job hunting"
-    assert profile.get_profile(U) == "- runs regularly\n- job hunting"
-    # Both entries were handed to the condenser as raw material.
+    assert profile.refresh_profile(U) == READING
+    assert profile.get_profile(U) == READING
+    # Both days were handed to the condenser as raw material.
     assert "running" in seen["recent"] and "interview" in seen["recent"]
-    assert seen["existing"] == ""
+    assert seen["existing"] == {}
 
 
-def test_profile_is_scoped_per_user(write_days, monkeypatch):
-    write_days(U, "only mine")
-    write_days("other", "only theirs")
+def test_the_energy_rating_goes_in_with_the_writing(write_days, monkeypatch):
+    """The energy section is read off what they actually rated, not guessed
+    from the tone of the writing."""
+    write_days(U, "a flat day", energy=3)
+    seen = {}
     monkeypatch.setattr(
-        profile, "_condense", lambda existing, recent: f"seen:{recent}"
+        profile, "_condense", lambda e, recent: seen.update(recent=recent) or READING
     )
 
     profile.refresh_profile(U)
-    # U's profile is built only from U's entries, not the other account's.
-    assert "only mine" in profile.get_profile(U)
-    assert "only theirs" not in profile.get_profile(U)
-    assert profile.get_profile("other") == ""
+
+    assert "energy 3/10" in seen["recent"]
 
 
-def test_refresh_carries_forward_existing_profile(write_days, monkeypatch):
+def test_a_reading_is_built_only_from_that_persons_days(write_days, monkeypatch):
+    write_days(U, "only mine")
+    write_days("other", "only theirs")
+    monkeypatch.setattr(
+        profile, "_condense", lambda existing, recent: {"who_you_are": recent}
+    )
+
+    profile.refresh_profile(U)
+
+    assert "only mine" in profile.get_profile(U)["who_you_are"]
+    assert "only theirs" not in profile.get_profile(U)["who_you_are"]
+    assert profile.get_profile("other") == {}
+
+
+def test_refresh_carries_forward_the_previous_reading(write_days, monkeypatch):
     write_days(U, "first")
-    monkeypatch.setattr(profile, "_condense", lambda e, r: "v1")
+    monkeypatch.setattr(profile, "_condense", lambda e, r: {"patterns": "v1"})
     profile.refresh_profile(U)
 
     captured = {}
     monkeypatch.setattr(
-        profile, "_condense", lambda e, r: captured.update(existing=e) or "v2"
+        profile, "_condense", lambda e, r: captured.update(existing=e) or {"patterns": "v2"}
     )
     profile.refresh_profile(U)
-    # The second condense sees the first profile as its starting point.
-    assert captured["existing"] == "v1"
+
+    assert captured["existing"] == {"patterns": "v1"}
 
 
-def test_maybe_refresh_waits_for_enough_days(write_days, monkeypatch):
-    calls = []
-    monkeypatch.setattr(profile, "refresh_profile", lambda uid: calls.append(uid))
+def test_entries_behind_counts_days_written_since_the_last_rebuild(
+    write_days, monkeypatch
+):
+    write_days(U, "one", "two")
+    assert profile.entries_behind(U) == 2
 
-    # Below the threshold: no refresh.
-    write_days(U, *["x"] * (profile.REFRESH_EVERY - 1))
-    profile.maybe_refresh(U)
-    assert calls == []
+    monkeypatch.setattr(profile, "_condense", lambda e, r: READING)
+    profile.refresh_profile(U)
+    assert profile.entries_behind(U) == 0
 
-    # One more day crosses the threshold: refresh fires.
-    write_days(U, "x", ending_days_ago=profile.REFRESH_EVERY - 1)
-    profile.maybe_refresh(U)
-    assert calls == [U]
+    write_days(U, "three", ending_days_ago=5)
+    assert profile.entries_behind(U) == 1
+
+
+def test_the_prompt_text_keeps_the_sections_in_order(sqlite_db, monkeypatch):
+    monkeypatch.setattr(profile, "_condense", lambda e, r: READING)
+    profile.refresh_profile(U)
+
+    text = profile.as_prompt_text(U)
+
+    assert text.index("who_you_are") < text.index("patterns") < text.index("energy")
+    assert "mornings are the good hours" in text

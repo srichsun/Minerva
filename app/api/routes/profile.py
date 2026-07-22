@@ -1,20 +1,22 @@
-"""The long-term profile the coach builds up about the person."""
+"""The rolling read of the person, built from their journal."""
 from fastapi import APIRouter
 
-from app.api.deps import CurrentUid
 from app.services import profile
+from app.api.deps import CurrentUid
 
 router = APIRouter(tags=["profile"])
 
 
 @router.get("/profile")
-def get_profile(uid: CurrentUid):
-    """The long-term profile the coach has built up about the person."""
-    return {"profile": profile.get_profile(uid)}
+def read_profile(uid: CurrentUid):
+    """The current reading, plus how far behind it has fallen."""
+    return {
+        "sections": profile.get_profile(uid),
+        "entries_behind": profile.entries_behind(uid),
+    }
 
 
 @router.post("/profile/refresh")
 def refresh_profile(uid: CurrentUid):
-    """Force a re-condense of the profile from recent entries (normally this
-    happens on its own every few entries)."""
-    return {"profile": profile.refresh_profile(uid)}
+    """Rebuild the reading from the journal. Only ever runs when asked."""
+    return {"sections": profile.refresh_profile(uid), "entries_behind": 0}

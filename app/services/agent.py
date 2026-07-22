@@ -55,7 +55,7 @@ def _prompt_with_profile(request) -> str:
     """
     uid = request.runtime.context
     try:
-        summary = profile.get_profile(uid)
+        summary = profile.as_prompt_text(uid)
     except Exception:
         summary = ""
     try:
