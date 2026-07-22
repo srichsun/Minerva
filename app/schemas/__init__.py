@@ -1,6 +1,6 @@
 """Pydantic schemas — the API's request/response contract."""
-from app.schemas.coach import SpeakRequest, TalkRequest, TalkResponse
+from app.schemas.coach import SpeakRequest, TalkRequest
 
 # Marks these as deliberate re-exports, so the linter doesn't read them as
 # unused imports.
-__all__ = ["SpeakRequest", "TalkRequest", "TalkResponse"]
+__all__ = ["SpeakRequest", "TalkRequest"]

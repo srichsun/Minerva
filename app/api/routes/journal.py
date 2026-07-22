@@ -3,7 +3,7 @@
 Only today can be written to. There is no endpoint that takes a date to write
 to, so backfilling a day you missed isn't refused, it's unreachable.
 """
-from datetime import date, timedelta
+from datetime import timedelta
 
 from fastapi import APIRouter, HTTPException
 
@@ -50,17 +50,6 @@ def entries_in_range(uid: CurrentUid, days: int = 7):
         "end": end.isoformat(),
         "entries": [_entry_dict(r, shown.get(r.id)) for r in rows],
     }
-
-
-@router.get("/entries/{day}")
-def entry_on_day(uid: CurrentUid, day: str):
-    """One journal day in full. `day` is YYYY-MM-DD."""
-    d = date.fromisoformat(day)
-    row = entries.entry_on(d, user_id=uid)
-    if row is None:
-        raise HTTPException(status_code=404, detail="nothing written that day")
-    shown = facts.for_entries([row.id], user_id=uid, categories=SHOWN)
-    return _entry_dict(row, shown.get(row.id))
 
 
 @router.post("/entries")

@@ -17,17 +17,13 @@ class TalkRequest(BaseModel):
         """Reject a blank turn rather than storing an empty journal entry.
 
         A silent recording or a stray Enter would otherwise cost a model call
-        and leave a row with nothing in it — one that no recall can ever use.
-        Whitespace is stripped so the stored transcript is what was said.
+        and leave a row with nothing in it. Whitespace is stripped so what gets
+        recorded is what was actually asked.
         """
         v = v.strip()
         if not v:
             raise ValueError("say something first")
         return v
-
-
-class TalkResponse(BaseModel):
-    answer: str
 
 
 class SpeakRequest(BaseModel):

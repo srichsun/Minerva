@@ -28,7 +28,7 @@ def test_protected_routes_require_auth():
     # Drop the override so the real gate runs; no token -> 401.
     app.dependency_overrides.pop(auth.current_user_uid, None)
     try:
-        assert client.post("/agent", json={"question": "hi"}).status_code == 401
+        assert client.post("/agent/stream", json={"question": "hi"}).status_code == 401
         # /speak costs money per character — it must be locked down too.
         assert client.post("/speak", json={"text": "hi"}).status_code == 401
     finally:
@@ -39,26 +39,26 @@ def test_a_blank_turn_is_rejected_before_it_costs_anything(sqlite_db):
     """A silent recording or a stray Enter must not reach the model, and must
     not leave an empty journal entry that no recall could ever use."""
     for blank in ("", "   ", "\n\t"):
-        resp = client.post("/agent", json={"question": blank})
+        resp = client.post("/agent/stream", json={"question": blank})
         assert resp.status_code == 422, blank
-        assert client.post("/agent/stream", json={"question": blank}).status_code == 422
 
     # Nothing was written.
     assert questions.questions_on(clock.today(), user_id=TEST_UID) == []
 
 
 def test_surrounding_whitespace_is_stripped_from_what_is_stored(sqlite_db, monkeypatch):
-    """What gets journalled is what was said, not the padding around it."""
-    monkeypatch.setattr(agent, "_reply_to", lambda msg, user_id: (f"heard: {msg}", []))
+    """What gets recorded is what was asked, not the padding around it."""
+    asked = {}
     monkeypatch.setattr(
-        agent, "_save_exchange", lambda m, r, user_id, s=None: saved.update(m=m)
+        agent,
+        "stream_and_save",
+        lambda message, user_id: iter([asked.setdefault("m", message) and ""]),
     )
-    saved = {}
 
-    resp = client.post("/agent", json={"question": "  I ran 5k today  "})
+    resp = client.post("/agent/stream", json={"question": "  I ran 5k today  "})
 
     assert resp.status_code == 200
-    assert saved["m"] == "I ran 5k today"
+    assert asked["m"] == "I ran 5k today"
 
 
 def test_entries_endpoint_returns_the_recent_days(sqlite_db):

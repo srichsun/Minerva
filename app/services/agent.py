@@ -149,22 +149,6 @@ def _conversation_so_far(message: str, user_id: str) -> list[dict]:
     return _todays_conversation(user_id) + [{"role": "user", "content": message}]
 
 
-def _reply_to(message: str, user_id: str) -> tuple[str, list[str]]:
-    """Send one message to the coach; return its reply and the days it looked at.
-
-    The coach sees everything asked today, so there is nothing else to pass in.
-    user_id rides along as the run's context so the dynamic prompt and the
-    recall tool — both called by LangChain, not by us — know whose journal
-    they are looking at.
-    """
-    result = _agent.invoke(
-        {"messages": _conversation_so_far(message, user_id)},
-        context=user_id,
-    )
-    messages = result["messages"]
-    return messages[-1].content, _days_looked_at(messages)
-
-
 # Recall stamps every fact it returns with "YYYY-MM-DD — ", so the days a
 # question reached into can be read straight back off the tool's output.
 _DAY = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
@@ -202,17 +186,6 @@ def _save_exchange(
         questions.save(message, reply, user_id=user_id, sources=sources)
     except Exception:
         pass
-
-
-def reply_and_save(message: str, user_id: str) -> dict:
-    """Answer the person's question, then record the exchange.
-
-    Returns {"answer": <the reply>} — the shape of the TalkResponse schema.
-    Everything is scoped to user_id so accounts stay separate.
-    """
-    reply, sources = _reply_to(message, user_id)
-    _save_exchange(message, reply, user_id, sources)
-    return {"answer": reply}
 
 
 def stream_and_save(message: str, user_id: str) -> Iterator[str]:
