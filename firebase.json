@@ -1,0 +1,20 @@
+{
+  "hosting": {
+    "public": "firebase-hosting-empty",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "run": {
+          "serviceId": "daily-coach",
+          "region": "asia-east1"
+        }
+      }
+    ],
+    "site": "heydearmyself"
+  }
+}

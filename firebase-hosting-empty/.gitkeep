@@ -1,0 +1,5 @@
+Firebase Hosting needs a public directory to exist even when every route is
+proxied to Cloud Run. This one is deliberately empty: the "**" rewrite in
+firebase.json sends all traffic — the React build and the API alike — to the
+Cloud Run service, so Hosting is only a custom-domain + TLS + CDN layer in
+front of it, never a second copy of the app to keep in sync.
