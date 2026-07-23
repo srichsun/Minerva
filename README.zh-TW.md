@@ -4,7 +4,7 @@
 
 > 🌐 **線上展示頁 → https://srichsun.github.io/dearme/**
 >
-> 🚀 **線上試用 → https://daily-coach-592904365774.asia-east1.run.app/**
+> 🚀 **線上試用 → https://heydearmyself.com**
 
 **一個關於能量、勝利與感恩的 AI 日記。** 一天一頁。寫下來，讀回去，看清楚這幾週到底是由什麼組成的。
 

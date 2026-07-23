@@ -4,7 +4,7 @@
 
 > 🌐 **Live showcase / 線上展示頁 → https://srichsun.github.io/dearme/**
 >
-> 🚀 **Live app / 線上試用 → https://daily-coach-592904365774.asia-east1.run.app/**
+> 🚀 **Live app / 線上試用 → https://heydearmyself.com**
 
 **An AI journal for energy, wins, and gratitude.** One day, one page. Write it,
 read it back, and watch what the weeks are actually made of.
